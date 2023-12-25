@@ -318,6 +318,13 @@ export async function triageCommits({ commits, commitTriageData, range }) {
               'merge. But this is not implemented yet. Please help!'
           )
           // TODO: Implement
+          // Potential help/ideas might be found here:
+          //   https://stackoverflow.com/a/60586875/88106
+          // Or, since we know these are package.json diffs with a fairly
+          // simple format, we might just be able to do look at the different
+          // versions, use semver or something to figure out what the new
+          // version should be, and then just replace the version number in the
+          // file.
         }
       }
 
