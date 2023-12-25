@@ -1,25 +1,16 @@
-/* eslint-env node */
-
-import { fileURLToPath } from 'node:url'
-
-import { faker } from '@faker-js/faker'
 import boxen from 'boxen'
 import { Octokit } from 'octokit'
 import ora from 'ora'
 import promptsImport from 'prompts'
 import type { Options, PromptObject } from 'prompts'
 import semver from 'semver'
-import { cd, chalk, fs, path, question, $ } from 'zx'
+import { chalk, fs, path, question, $ } from 'zx'
 import { ProcessOutput } from 'zx'
 
 import 'dotenv/config'
-import { CherryPickAnswer } from './types'
 
-// ─── Constants ───────────────────────────────────────────────────────────────
-
-const triageDataRepoPath = new URL(`../../../triage-data/`, import.meta.url)
-
-// ─── Types ───────────────────────────────────────────────────────────────────
+import { PR_MILESTONE_CACHE_PATH } from './consts'
+import { Range } from './types'
 
 /**
  * @typedef {{
@@ -41,8 +32,13 @@ const triageDataRepoPath = new URL(`../../../triage-data/`, import.meta.url)
 export const separator = chalk.dim('-'.repeat(process.stdout.columns))
 
 // Set the verbosity of all the functions in this file.
-export function setVerbosity(verbose) {
+export function setVerbosity(verbose: boolean) {
   $.verbose = verbose
+}
+
+// Set the verbosity of all the functions in this file.
+export function setCwd(cwd: string) {
+  $.cwd = cwd
 }
 
 export function getLogger() {
@@ -100,10 +96,8 @@ export function consoleBoxen(title, message) {
  *   // ...
  * }
  * ```
- *
- * @param {string} res
  */
-export function isYes(res) {
+export function isYes(res: string) {
   return ['', 'Y', 'y'].includes(res)
 }
 
@@ -341,150 +335,6 @@ export async function handleBranchesToCommits(
 }
 
 // ─── Git ─────────────────────────────────────────────────────────────────────
-
-/**
- * @param {string} range
- */
-export async function triageRange(range) {
-  const spinner = getSpinner(
-    `Getting the symmetric difference between ${chalk.magenta(
-      range.from
-    )} and ${chalk.magenta(range.to)}`
-  )
-
-  // Sometimes one of the `range` branches is a release branch with slashes like `release/branch/v6.3.3`.
-  // Here we're just replacing the slashes with dashes so that it's a valid file name.
-  const fileNamePrefix = [
-    range.from.replaceAll('/', '-'),
-    range.to.replaceAll('/', '-'),
-  ].join('_')
-
-  // Commit triage data files (like `main_next.commitTriageData.json`) come in and out of existence,
-  // so we can't rely on them to know if the triage data repo was cloned. Instead we use `.git`.
-  if (!fs.existsSync(new URL('./.git', triageDataRepoPath))) {
-    spinner.stop()
-    throw new Error(
-      [
-        "You're missing commit triage data.",
-        'You need to clone the triage data repo (https://github.com/redwoodjs/triage-data)',
-        'adjacent to the redwood one:',
-        '',
-        '```',
-        '.',
-        '├── redwood',
-        '└── triage-data',
-        '```',
-      ].join('\n')
-    )
-  }
-
-  // Set up the commit triage data. This reads a file like `./main_next.commitTriageData.json` into a map
-  // and sets up a hook on `process.exit` so that we don't have to remember to write it.
-  //
-  // The commit triage data is a map of commit hashes to triage data:
-  //
-  // ```js
-  // 'adddd23987b8a1003053280fafe772275e932217' => {
-  //   message: 'chore(deps): update dependency lerna to v7.3.0 (#9186)',
-  //   needsCherryPick: false
-  // }
-  // ```
-  let commitTriageData
-  const commitTriageDataPath = new URL(
-    `./${fileNamePrefix}.commitTriageData.json`,
-    triageDataRepoPath
-  )
-
-  try {
-    commitTriageData = new Map(
-      Object.entries(fs.readJSONSync(commitTriageDataPath, 'utf-8'))
-    )
-  } catch (e) {
-    if (e.code === 'ENOENT') {
-      commitTriageData = new Map()
-    } else {
-      throw e
-    }
-  }
-
-  // In git, the "symmetric difference" (syntactically, three dots: `...`) is what's different between two branches.
-  // It's the commits one branch has that the other doesn't, and vice versa:
-  //
-  // ```
-  // git log main...next
-  // ```
-  //
-  // Here we're only interested in the commits `range.from` (e.g., `main`) has that `range.to` (e.g. `next`) doesn't
-  // because we're cherry picking from the former to the latter.
-  //
-  // `git log` by itself isn't quite enough, but there are a couple flags that get us closer to what we want:
-  //
-  // - `--left-only` shows us the commits unique to the ref on the left side of the three dots
-  // - `--cherry-pick` omits commits that are _exactly_ the same between the branches
-  //
-  // It's very likely that some of the commits that are unique to the left ref have already been cherry picked into the right one.
-  // The reason that the `--cherry-pick` flag doesn't omit them  is that they were changed while cherry picking
-  // (think updating `yarn.lock`, etc.) so the diffs aren't one-to-one. The commit triage data and `git log --grep` get us the rest of the way there.
-  const lines = await getSymmetricDifference(range)
-
-  // Save the result for QA. (See `./triage/triageQA.mjs`.)
-  await fs.writeJSON(
-    new URL(
-      `./triage/${fileNamePrefix}.symmetricDifference.json`,
-      import.meta.url
-    ),
-    lines,
-    {
-      spaces: 2,
-    }
-  )
-
-  spinner.text = 'Resolving the symmetric difference'
-  const commits = await resolveSymmetricDifference(lines, {
-    range,
-  })
-  spinner.stop()
-
-  const commitsToTriage = await resolveCommitsToTriage({
-    commits,
-    commitTriageData,
-    range,
-  })
-
-  if (commitsToTriage.length) {
-    // Reversing here so that we triage commits from oldest newest. It's more natural to triage this way
-    // because otherwise you'll be missing context for the newer commits.
-    await triageCommits({
-      commits: commitsToTriage.reverse(),
-      commitTriageData,
-      range,
-    })
-    console.log()
-  }
-
-  reportCommitStatuses({ commits, commitTriageData, range })
-
-  if (commitTriageData.size || prMilestoneCache.size) {
-    fs.writeJSONSync(
-      commitTriageDataPath,
-      Object.fromEntries(commitTriageData),
-      {
-        spaces: 2,
-      }
-    )
-    fs.writeJSONSync(
-      prMilestoneCachePath,
-      Object.fromEntries(prMilestoneCache),
-      {
-        spaces: 2,
-      }
-    )
-
-    await cd(fileURLToPath(triageDataRepoPath))
-    await $`git commit -am "triage ${new Date().toISOString()}"`
-    await $`git push`
-  }
-}
 
 export const defaultGitLogOptions = [
   '--oneline',
@@ -743,203 +593,13 @@ function sanitizeMessage(message) {
   return message.replace('[', '\\[').replace(']', '\\]')
 }
 
-/**
- * @param {{
- *   commits: Commit[]
- *   commitTriageData: CommitTriageData,
- *   targetBranch: string,
- * }} options
- */
-export async function resolveCommitsToTriage({
-  commits,
-  commitTriageData,
-  range,
-}) {
-  const logs: Array<string> = []
+export let prMilestoneCache: Map<string, string>
 
-  const commitHashes = commits.map((commit) => commit.hash)
-
-  // `commits` are commits from main (or another branch) that are candidates for cherry picking.
-  // If the hash of one of them isn't in the commit triage data, it was cherry picked cleanly,
-  // so we don't need to keep track of it anymore.
-  for (const [hash] of commitTriageData) {
-    if (!commitHashes.includes(hash)) {
-      logs.push(
-        `✨ ${chalk.cyan(
-          commitTriageData.get(hash).message
-        )} was cherry picked cleanly`
-      )
-      commitTriageData.delete(hash)
-    }
-  }
-
-  // Delete those that needed to be cherry picked and have been. These ones weren't clean cherry picks.
-  const needsCherryPick = new Map<string, any>(
-    [...commitTriageData.entries()].filter(
-      ([_hash, triageData]) => triageData.needsCherryPick
-    )
-  )
-
-  for (const [hash, triageData] of needsCherryPick) {
-    const { ref } = commits.find((commit) => commit.hash === hash)
-
-    if (ref === range.to) {
-      logs.push(
-        `🐙 ${chalk.cyan(triageData.message)} was cherry picked with changes`
-      )
-      commitTriageData.delete(hash)
-    }
-  }
-
-  if (logs.length) {
-    consoleBoxen(
-      '🧹 Purging commit triage data',
-      [`Removed ${logs.length} commits:`, ...logs].join('\n')
-    )
-  } else {
-    consoleBoxen('✅', 'The commit triage data is up to date')
-  }
-
-  // Get the commits that need triage. The logic for the filters is:
-  //
-  // - not every annotated commit is a commit; some are just `git log --graph` ui, so filter those out
-  // - at this point, annotated commits that have a `ref` that's the same as the target branch have already been cherry picked
-  // - now that the commit triage data is up to date, any annotated commits that aren't in it haven't been triaged
-  return commits
-    .filter((commit) => commit.type === 'commit')
-    .filter((commit) => commit.ref !== range.to)
-    .filter((commit) => !commitTriageData.has(commit.hash))
-}
-
-/**
- * Given an array of commit objects, ask if they need to be cherry picked and update the commit triage data in response.
- *
- * @param {{
- *   commitsToTriage: AnnotatedCommit[],
- *   commitTriageData: CommitTriageData,
- *   range: Range,
- * }} options
- */
-export async function triageCommits({ commits, commitTriageData, range }) {
-  consoleBoxen(
-    `🐙 New commit(s)`,
-    [
-      [
-        `There is/are ${chalk.magenta(commits.length)} commit(s)`,
-        `in the ${chalk.magenta(range.from)} branch`,
-        `that isn't/aren't in the ${chalk.magenta(range.to)} branch:`,
-      ].join(' '),
-      ...commits.map(({ hash, message }) => `• ${chalk.dim(hash)} ${message}`),
-    ].join('\n')
-  )
-
-  for (const commit of commits) {
-    // eslint-disable-next-line no-constant-condition
-    while (true) {
-      const prettyLine = [
-        '  •',
-        chalk.dim(commit.hash),
-        chalk.cyan(commit.message),
-        commit.milestone && chalk.yellow(`(${commit.milestone})`),
-      ]
-        .filter(Boolean)
-        .join(' ')
-      const prettyTo = chalk.magenta(range.to)
-      const message = [
-        'Does...',
-        prettyLine,
-        `need to be cherry picked into ${prettyTo}? [Y/n/s(kip)/o(pen)] > `,
-      ].join('\n')
-
-      let answer: CherryPickAnswer | 'open' = 'no'
-      if (!['RSC', 'SSR', 'v7.0.0'].includes(commit.milestone)) {
-        const result = await prompts({
-          type: 'text',
-          name: 'answer',
-          message,
-          validate: (answer) => {
-            return isValidAnswer(answer) || 'Please enter a valid answer'
-          },
-        })
-        answer = getLongAnswer(result.answer)
-      }
-
-      let comment = ''
-      if (answer === 'skip') {
-        const commentRes = await prompts({
-          type: 'text',
-          name: 'comment',
-          message: 'Why are you skipping it?',
-
-          validate: (comment) => comment.length > 0 || 'Please enter a comment',
-        })
-
-        comment = commentRes.comment
-      }
-
-      if (answer === 'open') {
-        if (commit.url) {
-          await $`open ${commit.url}`
-        } else {
-          console.log("There's no PR for this commit")
-        }
-
-        continue
-      }
-
-      commitTriageData.set(commit.hash, {
-        message: commit.message,
-        needsCherryPick: answer,
-        ...(comment && { comment }),
-      })
-
-      break
-    }
-  }
-}
-function isValidAnswer(answer: string) {
-  return ['', 'y', 'yes', 'n', 'no', 's', 'skip', 'o', 'open'].includes(
-    answer.toLowerCase()
-  )
-}
-
-function getLongAnswer(answer: string) {
-  answer = answer.toLowerCase()
-
-  // If the user just hits enter (i.e. answer === ''), default to yes.
-  if (['', 'y', 'yes'].includes(answer)) {
-    return 'yes'
-  }
-
-  if (['n', 'no'].includes(answer)) {
-    return 'no'
-  }
-
-  if (['s', 'skip'].includes(answer)) {
-    return 'skip'
-  }
-
-  if (['o', 'open'].includes(answer)) {
-    return 'open'
-  }
-
-  throw new Error('Invalid answer: ' + answer)
-}
-
-export let prMilestoneCache
-const prMilestoneCachePath = new URL(
-  './prMilestoneCache.json',
-  triageDataRepoPath
-)
-
-/**
- * @param {string} prURL
- */
-export async function getPRMilestoneFromURL(prURL) {
+export async function getPRMilestoneFromURL(prURL: string) {
   if (!prMilestoneCache) {
     try {
       prMilestoneCache = new Map(
-        Object.entries(fs.readJSONSync(prMilestoneCachePath, 'utf-8'))
+        Object.entries(fs.readJSONSync(PR_MILESTONE_CACHE_PATH, 'utf-8'))
       )
     } catch (e) {
       if (e.code === 'ENOENT') {
@@ -979,13 +639,12 @@ const getPRMilestoneFromURLQuery = `
   }
 `
 
-/**
- * @param {{
- *   commit: Commit[],
- *   commitTriageData: CommitTriageData
- *   range: { from: string, to: string },
- * }} param0
- */
+interface ReportCommitStatusesOptions {
+  commits: Array<any>
+  commitTriageData: Set<any>
+  range: Range
+}
+
 export function reportCommitStatuses({ commits, commitTriageData, range }) {
   // We still have to color commits based on their cherry pick status.
   // First, get the ones to color:
@@ -1059,115 +718,6 @@ export function reportCommitStatuses({ commits, commitTriageData, range }) {
 interface RangeSteps {
   from: string
   to: string[]
-}
-
-export async function compareRange(range: RangeSteps, { colorSeed = 0 } = {}) {
-  const spinner = getSpinner(
-    `Getting the symmetric difference between ${chalk.magenta(
-      range.from
-    )} and ${chalk.magenta(range.to[0])}`
-  )
-
-  const lines = await getSymmetricDifference({
-    ...range,
-    to: range.to[0],
-  })
-
-  // Save the result for QA. (See `./compare/compareQA.mjs`.)
-  // Sometimes one of the `range` branches is a release branch with slashes like `release/branch/v6.3.3`.
-  // Here we're just replacing the slashes with dashes so that it's a valid file name.
-  const fileNamePrefix = [
-    range.from.replaceAll('/', '-'),
-    range.to[0].replaceAll('/', '-'),
-  ].join('_')
-
-  await fs.writeJSON(
-    new URL(
-      `./compare/${fileNamePrefix}.symmetricDifference.json`,
-      import.meta.url
-    ),
-    lines,
-    {
-      spaces: 2,
-    }
-  )
-
-  faker.seed(colorSeed)
-
-  const refsToColors = range.to.reduce<Record<string, string>>(
-    (colors, ref) => {
-      colors[ref] = faker.color.rgb()
-      return colors
-    },
-    {}
-  )
-
-  spinner.text = 'Resolving the symmetric difference (this could take a while)'
-  const commits = await resolveSymmetricDifference(lines, {
-    range,
-    refsToColorFunctions: Object.entries(refsToColors).reduce(
-      (refsToColorFunctions, [ref, color]) => {
-        refsToColorFunctions[ref] = chalk.bgHex(color)
-        return refsToColorFunctions
-      },
-      {}
-    ),
-  })
-  spinner.stop()
-
-  const milestonesToCommits = commits.reduce((milestonesToCommits, commit) => {
-    if (!commit.milestone) {
-      return milestonesToCommits
-    }
-
-    milestonesToCommits[commit.milestone] =
-      (milestonesToCommits[commit.milestone] ?? 0) + 1
-    return milestonesToCommits
-  }, {})
-
-  consoleBoxen(
-    '🔖 Milestones to commits',
-    Object.entries(milestonesToCommits)
-      .map(([milestone, commits]) => `${milestone} (${commits})`)
-      .sort()
-      .join('\n')
-  )
-
-  // Make an object of refs to the number of commits with that ref to show in the key:
-  //
-  // ```js
-  // {
-  //   next: 23,
-  //   'v6.3.2': 4,
-  //   ...
-  // }
-  // ```
-  const refsToCommits = commits.reduce((refsToCommits, commit) => {
-    refsToCommits[commit.ref] = (refsToCommits[commit.ref] ?? 0) + 1
-    return refsToCommits
-  }, {})
-
-  // Sometimes we check quite a few versions to figure out where a commit was released for the first time.
-  const refsToColorsKey = Object.entries(refsToColors)
-    .filter(([ref]) =>
-      commits
-        // TODO: it may be worth making this filter a little smarter.
-        .filter((commit) => commit.type === 'commit')
-        .some((commit) => commit.ref === ref)
-    )
-    .map(([ref, color]) => {
-      return `${chalk.hex(color)('■')} ${ref} (${refsToCommits[ref]})`
-    })
-
-  consoleBoxen(
-    '🔑 Key',
-    [
-      `${chalk.white('■')} ${range.from} ${`(${refsToCommits[range.from]})`}`,
-      ...refsToColorsKey,
-      `${chalk.dim('■')} Chore commit or purely-decorative line`,
-    ].join('\n')
-  )
-  console.log([...commits.map((commit) => commit.pretty)].join('\n'))
 }
 
 /**

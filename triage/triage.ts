@@ -23,9 +23,10 @@ import {
   prompts,
   resolveBranchStatuses,
   setVerbosity,
-  triageRange,
+  setCwd,
 } from '../lib/releaseLib'
 import type { Range } from "../lib/types";
+import { setTriageCwd, triageRange } from "./triageLib";
 
 async function main() {
   let options
@@ -40,7 +41,9 @@ async function main() {
 
   const { verbose, checkBranchStatuses, range } = options
 
-  setVerbosity(verbose)
+  setVerbosity(!!verbose)
+  setCwd('../redwood')
+  setTriageCwd('../redwood')
 
   // One gotcha when triaging commits: you don't have the latest branches.
   if (checkBranchStatuses) {
