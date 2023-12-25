@@ -24,12 +24,12 @@ import {
   resolveBranchStatuses,
   setVerbosity,
   setCwd,
-} from '../lib/releaseLib'
-import type { Range } from "../lib/types";
-import { setTriageCwd, triageRange } from "./triageLib";
+} from '../lib/releaseLib.js'
+import type { Range } from "../lib/types.js";
+import { setTriageCwd, triageRange } from "./triageLib.js";
 
 async function main() {
-  let options
+  let options: Awaited<ReturnType<typeof parseArgs>>
 
   try {
     options = await parseArgs()

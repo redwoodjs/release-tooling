@@ -9,8 +9,8 @@ import { ProcessOutput } from 'zx'
 
 import 'dotenv/config'
 
-import { PR_MILESTONE_CACHE_PATH } from './consts'
-import { Range } from './types'
+import { PR_MILESTONE_CACHE_PATH } from './constants.js'
+import { Range } from './types.js'
 
 /**
  * @typedef {{

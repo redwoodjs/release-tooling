@@ -2,7 +2,7 @@ import { fileURLToPath } from 'node:url'
 
 import { cd, chalk, fs, question, $ } from 'zx'
 
-import { PR_MILESTONE_CACHE_PATH, TRIAGE_DATA_PATH } from '../lib/consts'
+import { PR_MILESTONE_CACHE_PATH, TRIAGE_DATA_PATH } from '../lib/constants.js'
 import {
   consoleBoxen,
   getSpinner,
@@ -12,8 +12,8 @@ import {
   reportCommitStatuses,
   resolveSymmetricDifference,
   unwrap,
-} from '../lib/releaseLib'
-import { CherryPickAnswer, Range } from '../lib/types'
+} from '../lib/releaseLib.js'
+import { CherryPickAnswer, Range } from '../lib/types.js'
 
 export function setTriageCwd(cwd: string) {
   $.cwd = cwd
