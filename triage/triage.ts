@@ -12,9 +12,9 @@
 //
 // - [ ] --skip-branch-check skips the branch status check
 
-import { parseArgs as _parseArgs } from 'node:util'
+import util from "node:util";
 
-import { chalk } from 'zx'
+import { chalk } from "zx";
 
 import {
   branchExists,
@@ -24,7 +24,8 @@ import {
   resolveBranchStatuses,
   setVerbosity,
   triageRange,
-} from '../releaseLib.mjs'
+} from '../lib/releaseLib'
+import type { Range } from "../lib/types";
 
 async function main() {
   let options
@@ -61,59 +62,55 @@ async function main() {
   }
 }
 
-main()
-
-// ─── Helpers ─────────────────────────────────────────────────────────────────
-
-async function parseArgs() {
-  const { positionals, values } = _parseArgs({
+export async function parseArgs() {
+  const { positionals, values } = util.parseArgs({
     allowPositionals: true,
 
     options: {
       // Seems like a limitation of `parseArgs`, but we can't specify `check-branches: { default: true }`
       // because there's no way to unset it at the CLI.
-      'skip-branch-status-check': {
-        type: 'boolean',
+      "skip-branch-status-check": {
+        type: "boolean",
       },
 
       verbose: {
-        type: 'boolean',
-        short: 'v',
+        type: "boolean",
+        short: "v",
         default: false,
       },
     },
-  })
+  });
 
-  const range = {}
+  const range: Range = { to: "", from: "" };
 
   // We let the user provide a range (`main...next`) as a positional argument. If they don't, we prompt.
   if (positionals.length) {
-    const [userProvidedRange] = positionals
+    const [userProvidedRange] = positionals;
 
     // Matches something like `main...next`.
-    const rangeRegExp = /.+\.\.\..+/
+    const rangeRegExp = /.+\.\.\..+/;
 
     if (!rangeRegExp.test(userProvidedRange)) {
       throw new Error(
         `Error: If you provide a positional argument, it must be in the form of a range like ${chalk.magenta(
-          'main...next'
+          "main...next"
         )}`
-      )
+      );
     }
 
-    const [from, to] = userProvidedRange.split('...')
+    const [from, to] = userProvidedRange.split("...");
 
     if (!(await branchExists(from))) {
-      throw new Error(`The branch ${chalk.magenta(from)} doesn't exist.`)
+      throw new Error(`The branch ${chalk.magenta(from)} doesn't exist.`);
     }
     if (!(await branchExists(to))) {
-      throw new Error(`The branch ${chalk.magenta(to)} doesn't exist.`)
+      throw new Error(`The branch ${chalk.magenta(to)} doesn't exist.`);
     }
 
-    range.from = from
-    range.to = to
+    range.from = from;
+    range.to = to;
   } else {
-    const releaseBranches = await getReleaseBranches()
+    const releaseBranches = await getReleaseBranches();
 
     // You should cherry pick from
     //
@@ -123,25 +120,25 @@ async function parseArgs() {
     // You shouldn't cherry pick straight from `main` to a release branch
     // because if the release branch is a patch, the minor (which is cut from `next`) will be missing that commit.
     const choices = [
-      'main...next',
+      "main...next",
       ...releaseBranches.map((branch) => `next...${branch}`),
     ].map((branch) => {
       return {
         title: branch,
         value: branch,
-      }
-    })
+      };
+    });
 
     const rangeRes = await prompts({
-      name: 'range',
-      message: 'Which range do you want to triage?',
-      type: 'select',
+      name: "range",
+      message: "Which range do you want to triage?",
+      type: "select",
       choices,
-    })
+    });
 
-    const [from, to] = rangeRes.range.split('...')
-    range.from = from
-    range.to = to
+    const [from, to] = rangeRes.range.split("...");
+    range.from = from;
+    range.to = to;
   }
 
   // Spreading `values` here adds `no-check-branches-statuses`. Instead we add them by hand, specifying defaults:
@@ -150,10 +147,12 @@ async function parseArgs() {
   // - if `--no-check-branches-statuses` isn't explicitly set, default to `true`.
   return {
     range,
-    checkBranchStatuses: !values['skip-check-branch-check'] ?? true,
+    checkBranchStatuses: !values["skip-check-branch-check"] ?? true,
     verbose: values.verbose,
-  }
+  };
 }
+
+main()
 
 // TODO
 // function getHelp() {

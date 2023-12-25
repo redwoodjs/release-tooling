@@ -2,10 +2,10 @@
   "private": true,
   "license": "MIT",
   "scripts": {
-    "release": "node ./tasks/release/release.mjs",
-    "release:compare": "node ./tasks/release/compare/compare.mjs",
-    "release:notes": "node ./tasks/release/generateReleaseNotes.mjs",
-    "release:triage": "node ./tasks/release/triage/triage.mjs"
+    "release": "node ./release.mjs",
+    "release:compare": "node ./compare/compare.mjs",
+    "release:notes": "node ./generateReleaseNotes.mjs",
+    "release:triage": "node ./triage/triage.mjs"
   },
   "devDependencies": {
     "@actions/cache": "3.2.2",

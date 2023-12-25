@@ -6,11 +6,14 @@ import { faker } from '@faker-js/faker'
 import boxen from 'boxen'
 import { Octokit } from 'octokit'
 import ora from 'ora'
-import _prompts from 'prompts'
+import promptsImport from 'prompts'
+import type { Options, PromptObject } from 'prompts'
 import semver from 'semver'
 import { cd, chalk, fs, path, question, $ } from 'zx'
+import { ProcessOutput } from 'zx'
 
 import 'dotenv/config'
+import { CherryPickAnswer } from './types'
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -46,14 +49,11 @@ export function getLogger() {
   return $.verbose ? console.log : () => {}
 }
 
-/**
- *
- * @param {string} message
- */
-export function getSpinner(message) {
+export function getSpinner(message: string) {
   return $.verbose
     ? {
         stop: () => {},
+        text: '',
       }
     : ora(message).start()
 }
@@ -64,10 +64,8 @@ export function getSpinner(message) {
  * ```js
  * unwrap(await $`git branch --list release/*`)
  * ```
- *
- * @param {import('zx').ProcessOutput} processOutput
  */
-export function unwrap(processOutput) {
+export function unwrap(processOutput: ProcessOutput) {
   return processOutput.stdout.trim()
 }
 
@@ -113,11 +111,12 @@ export function isYes(res) {
  * Wrapper around `prompts` to exit on crtl c.
  *
  * @template Name
- * @param {import('prompts').PromptObject<Name>} promptsObject
- * @param {import('prompts').Options} promptsOptions
  */
-export function prompts(promptsObject, promptsOptions) {
-  return _prompts(promptsObject, {
+export function prompts(
+  promptsObject: PromptObject,
+  promptsOptions: Options = {}
+) {
+  return promptsImport(promptsObject, {
     ...promptsOptions,
     onCancel: () => process.exit(1),
   })
@@ -160,10 +159,12 @@ export async function resolveBranchStatuses(branches) {
 
   await $`git remote update ${result.redwoodRemote}`
 
-  // Get an object of branches to their commit statuses. I.e., if they're ahead, behind, or diverged.
-  const branchesToCommits = await getBranchesToCommits(branches, {
-    redwoodRemote: result.redwoodRemote,
-  })
+  // Get an object of branches to their commit statuses. I.e., if they're
+  // ahead, behind, or diverged.
+  const branchesToCommits = await getBranchesToCommits(
+    branches,
+    result.redwoodRemote
+  )
 
   spinner.stop()
 
@@ -178,26 +179,29 @@ export async function resolveBranchStatuses(branches) {
  * Find the remote that points to `redwoodjs/redwood.git`.
  */
 export async function getRedwoodRemote() {
-  const result = {
+  const result: any = {
     redwoodRemote: undefined,
     error: undefined,
   }
 
   const gitRemotes = unwrap(await $`git remote -v`).split('\n')
 
-  result.redwoodRemote = gitRemotes.reduce((redwoodRemote, remote) => {
-    if (redwoodRemote) {
-      return redwoodRemote
-    }
+  result.redwoodRemote = gitRemotes.reduce<string | undefined>(
+    (redwoodRemote, remote) => {
+      if (redwoodRemote) {
+        return redwoodRemote
+      }
 
-    const found = remote.match(
-      /(?<name>\w+)\s+(git@|https:\/\/)github\.com(:|\/)redwoodjs\/redwood\.git/
-    )
+      const found = remote.match(
+        /(?<name>\w+)\s+(git@|https:\/\/)github\.com(:|\/)redwoodjs\/redwood\.git/
+      )
 
-    if (found?.groups.name) {
-      return found.groups.name
-    }
-  }, result.redwoodRemote)
+      if (found?.groups?.name) {
+        return found.groups.name
+      }
+    },
+    undefined
+  )
 
   if (!result.redwoodRemote) {
     result.error =
@@ -225,7 +229,10 @@ export async function getRedwoodRemote() {
  *
  * @param {string[]} branches
  */
-export async function getBranchesToCommits(branches, { redwoodRemote }) {
+export async function getBranchesToCommits(
+  branches: Array<string>,
+  redwoodRemote: string
+) {
   return branches.reduce(async (branchesToCommitsPromise, branch) => {
     const branchesToCommits = await branchesToCommitsPromise
 
@@ -263,14 +270,23 @@ export async function branchExistsOnRedwoodRemote(branch, redwoodRemote) {
   return !!unwrap(await $`git ls-remote --heads ${redwoodRemote} ${branch}`)
 }
 
+interface BranchStatus {
+  existsOnRedwoodRemote: boolean
+  upToDate: boolean
+  diverged: boolean
+  commitsExclusiveToLocalBranch: number
+  commitsExclusiveToRemoteBranch: number
+}
+
 /**
- * Logs results. Returns an error if a branch diverged. Otherwise, prompts the user to update their local branches if they need to.
+ * Logs results. Returns an error if a branch diverged. Otherwise, prompts the
+ * user to update their local branches if they need to.
  */
 export async function handleBranchesToCommits(
-  branchesToCommits,
+  branchesToCommits: Record<string, BranchStatus>,
   { redwoodRemote }
 ) {
-  const result = {
+  const result: any = {
     error: undefined,
   }
 
@@ -294,7 +310,7 @@ export async function handleBranchesToCommits(
 
   consoleBoxen('🐙 Branch status(es)', message.join('\n'))
 
-  const divergedGetter = ([, { diverged }]) => diverged
+  const divergedGetter = ([, { diverged }]: [unknown, BranchStatus]) => diverged
 
   const diverged = Object.entries(branchesToCommits).some(divergedGetter)
 
@@ -556,9 +572,9 @@ export async function resolveLine(
   line,
   { range, refsToColorFunctions, logger }
 ) {
-  const logs = []
+  const logs: Array<string> = []
 
-  const commit = {
+  const commit: any = {
     line,
     type: 'commit',
     ref: range.from,
@@ -739,7 +755,7 @@ export async function resolveCommitsToTriage({
   commitTriageData,
   range,
 }) {
-  const logs = []
+  const logs: Array<string> = []
 
   const commitHashes = commits.map((commit) => commit.hash)
 
@@ -758,7 +774,7 @@ export async function resolveCommitsToTriage({
   }
 
   // Delete those that needed to be cherry picked and have been. These ones weren't clean cherry picks.
-  const needsCherryPick = new Map(
+  const needsCherryPick = new Map<string, any>(
     [...commitTriageData.entries()].filter(
       ([_hash, triageData]) => triageData.needsCherryPick
     )
@@ -820,29 +836,33 @@ export async function triageCommits({ commits, commitTriageData, range }) {
   for (const commit of commits) {
     // eslint-disable-next-line no-constant-condition
     while (true) {
-      const message = [
-        'Does...',
-        [
-          '  •',
-          chalk.dim(commit.hash),
-          chalk.cyan(commit.message),
-          commit.milestone && chalk.yellow(`(${commit.milestone})`),
-        ]
-          .filter(Boolean)
-          .join(' '),
-        `need to be cherry picked into ${chalk.magenta(
-          range.to
-        )}? [Y/n/s(kip)/o(pen)] > `,
+      const prettyLine = [
+        '  •',
+        chalk.dim(commit.hash),
+        chalk.cyan(commit.message),
+        commit.milestone && chalk.yellow(`(${commit.milestone})`),
       ]
         .filter(Boolean)
-        .join('\n')
+        .join(' ')
+      const prettyTo = chalk.magenta(range.to)
+      const message = [
+        'Does...',
+        prettyLine,
+        `need to be cherry picked into ${prettyTo}? [Y/n/s(kip)/o(pen)] > `,
+      ].join('\n')
 
-      let answer = 'no'
-      if (!['RSC', 'v7.0.0'].includes(commit.milestone)) {
-        answer = await question(message)
+      let answer: CherryPickAnswer | 'open' = 'no'
+      if (!['RSC', 'SSR', 'v7.0.0'].includes(commit.milestone)) {
+        const result = await prompts({
+          type: 'text',
+          name: 'answer',
+          message,
+          validate: (answer) => {
+            return isValidAnswer(answer) || 'Please enter a valid answer'
+          },
+        })
+        answer = getLongAnswer(result.answer)
       }
-
-      answer = getLongAnswer(answer)
 
       let comment = ''
       if (answer === 'skip') {
@@ -877,15 +897,16 @@ export async function triageCommits({ commits, commitTriageData, range }) {
     }
   }
 }
+function isValidAnswer(answer: string) {
+  return ['', 'y', 'yes', 'n', 'no', 's', 'skip', 'o', 'open'].includes(
+    answer.toLowerCase()
+  )
+}
 
-/**
- *
- * @param {string} answer
- * @returns {'yes'|'no'|'skip'|'open'}
- */
-function getLongAnswer(answer) {
+function getLongAnswer(answer: string) {
   answer = answer.toLowerCase()
 
+  // If the user just hits enter (i.e. answer === ''), default to yes.
   if (['', 'y', 'yes'].includes(answer)) {
     return 'yes'
   }
@@ -901,6 +922,8 @@ function getLongAnswer(answer) {
   if (['o', 'open'].includes(answer)) {
     return 'open'
   }
+
+  throw new Error('Invalid answer: ' + answer)
 }
 
 export let prMilestoneCache
@@ -1033,12 +1056,12 @@ export function reportCommitStatuses({ commits, commitTriageData, range }) {
   )
 }
 
-/**
- *
- * @param {{ from: string, to: string[] }} range
- * @param {{ colorSeed: number }} options
- */
-export async function compareRange(range, { colorSeed = 0 } = {}) {
+interface RangeSteps {
+  from: string
+  to: string[]
+}
+
+export async function compareRange(range: RangeSteps, { colorSeed = 0 } = {}) {
   const spinner = getSpinner(
     `Getting the symmetric difference between ${chalk.magenta(
       range.from
@@ -1071,10 +1094,13 @@ export async function compareRange(range, { colorSeed = 0 } = {}) {
 
   faker.seed(colorSeed)
 
-  const refsToColors = range.to.reduce((colors, ref) => {
-    colors[ref] = faker.color.rgb()
-    return colors
-  }, {})
+  const refsToColors = range.to.reduce<Record<string, string>>(
+    (colors, ref) => {
+      colors[ref] = faker.color.rgb()
+      return colors
+    },
+    {}
+  )
 
   spinner.text = 'Resolving the symmetric difference (this could take a while)'
   const commits = await resolveSymmetricDifference(lines, {
@@ -1157,13 +1183,13 @@ export async function getLatestRelease() {
  * Gets releases branches (e.g. `release/major/v7.0.0`, `release/minor/v6.4.0`, `release/patch/v6.3.2`, etc.)
  */
 export async function getReleaseBranches() {
-  let releaseBranches = unwrap(await $`git branch --list release/*`)
+  const releaseBranchesStr = unwrap(await $`git branch --list release/*`)
 
-  if (releaseBranches === '') {
+  if (releaseBranchesStr === '') {
     return []
   }
 
-  releaseBranches = releaseBranches
+  const releaseBranches = releaseBranchesStr
     .split('\n')
     .map((branch) => branch.trim())
     .sort((releaseBranchA, releaseBranchB) => {
@@ -1176,10 +1202,7 @@ export async function getReleaseBranches() {
   return releaseBranches.reverse()
 }
 
-/**
- * @param {string} branch
- */
-export async function branchExists(branch) {
+export async function branchExists(branch: string) {
   return !!unwrap(await $`git branch --list ${branch}`)
 }
 
@@ -1266,9 +1289,8 @@ export async function getPRsWithMilestone(milestoneTitle) {
     node: {
       pullRequests: { nodes },
     },
-  } = /** @type {GetPullRequestIdsRes} */ (
-    await octokit.graphql(
-      `
+  } = /** @type {GetPullRequestIdsRes} */ await octokit.graphql(
+    `
         query ($milestoneId: ID!) {
           node(id: $milestoneId) {
             ... on Milestone {
@@ -1296,10 +1318,9 @@ export async function getPRsWithMilestone(milestoneTitle) {
           }
         }
       `,
-      {
-        milestoneId: milestone.id,
-      }
-    )
+    {
+      milestoneId: milestone.id,
+    }
   )
 
   return nodes
