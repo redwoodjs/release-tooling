@@ -5,6 +5,7 @@
   "< 2026d799f74e4e86352c79b9cab60b090fece069 #9620: Update studio to support variable components (Mailer) (#9639)",
   "< 8e262c51d28200350dc52fe786e4e3ebcc22e917 chore(tasks): Add comparison view to nmHoisting visualisation (#9751)",
   "< 4cdc49759aaee4f4967a8c838aff9adccc780732 chore(cli): make fs modules used in the CLI consistent (#9746)",
+  "< ea36ee2655ab3e616d4e5f1dd2ac631434f5d0ec chore(tooling): Make sure console boxen print on a new line",
   "< e730fdbb95d8ce5f96b820cdf3859f880d282af6 chore(CI): fix publish release candidate",
   "< 7cdf0381d7c972024b537575e01ec86d961382cb feat(CLI): add check node version middleware, rm `.nvmrc`, yarn engines (#9728)",
   "< 43a7f4bc0fde71cb87f8314ef300af7c842a214c chore(CI): update test project fixture and CRWA for deploy target CI repo (#9730)",
