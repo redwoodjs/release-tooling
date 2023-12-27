@@ -285,69 +285,82 @@ export async function triageCommits({ commits, commitTriageData, range }) {
         continue
       }
 
-      // Try cherry-picking
-      await $`git checkout ${range.to}`
-      const cherryPickResult = await $`git cherry-pick ${commit.hash}`.nothrow()
+      if (answer === 'yes') {
+        // Try cherry-picking
+        await $`git checkout ${range.to}`
+        const cherryPickResult =
+          await $`git cherry-pick ${commit.hash}`.nothrow()
 
-      if (cherryPickResult.exitCode !== 0) {
-        const filesWithConflicts = unwrap(
-          await $`git diff --name-only --diff-filter=U`
-        ).split('\n')
-
-        // If the only file with conflicts is yarn.lock we can probably fix the
-        // conflict automatically by just reinstalling
-        if (
-          filesWithConflicts.length === 1 &&
-          filesWithConflicts[0] === 'yarn.lock'
-        ) {
-          handleYarnLockConflicts()
-          break
-        }
-
-        // If only package.json files and yarn.lock changed, it's most likely
-        // just updated package versions. Using the "combine" merge strategy
-        // usually works, so let's suggest that and let the user confirm
-        if (
-          filesWithConflicts.every(
-            (file) => file.endsWith('/package.json') || file === 'yarn.lock'
-          )
-        ) {
-          console.log(
-            'Only package.json files and yarn.lock changed. The ' +
-              'script could potentially suggest the result of a "combine" ' +
-              'merge. But this is not implemented yet. Please help!'
-          )
-          // TODO: Implement
-          // Potential help/ideas might be found here:
-          //   https://stackoverflow.com/a/60586875/88106
-          // Or, since we know these are package.json diffs with a fairly
-          // simple format, we might just be able to do look at the different
-          // versions, use semver or something to figure out what the new
-          // version should be, and then just replace the version number in the
-          // file.
+        if (cherryPickResult.exitCode !== 0) {
+          await handleFailedCherryPick()
         }
       }
 
-      if (cherryPickResult.exitCode !== 0) {
-        await question(
-          'The script could not automatically fix the cherry-pick ' +
-            'conflicts.\nPlease fix them manually in a separate console and ' +
-            'then press any key to let the script continue with ' +
-            '`git cherry-pick --continue` >'
-        )
-
-        await $`git cherry-pick --continue --no-edit`
-      }
-
-      // commitTriageData.set(commit.hash, {
-      //   message: commit.message,
-      //   needsCherryPick: answer,
-      //   ...(comment && { comment }),
-      // })
+      commitTriageData.set(commit.hash, {
+        message: commit.message,
+        needsCherryPick: answer,
+        ...(comment && { comment }),
+      })
 
       break
     }
   }
+}
+
+async function handleFailedCherryPick() {
+  // We'll print a message later, but we don't know which one yet. But we do
+  // know we want some space above it
+  console.log()
+
+  const filesWithConflicts = unwrap(
+    await $`git diff --name-only --diff-filter=U`
+  ).split('\n')
+
+  // If the only file with conflicts is yarn.lock we can probably fix the
+  // conflict automatically by just reinstalling
+  if (
+    filesWithConflicts.length === 1 &&
+    filesWithConflicts[0] === 'yarn.lock'
+  ) {
+    handleYarnLockConflicts()
+    return
+  }
+
+  // If only package.json files and yarn.lock changed, it's most likely just
+  // updated package versions. Using the "combine" merge strategy usually
+  // works, so let's suggest that and let the user confirm
+  if (
+    filesWithConflicts.every(
+      (file) => file.endsWith('/package.json') || file === 'yarn.lock'
+    )
+  ) {
+    console.log(
+      'Only package.json files and yarn.lock changed.\n' +
+        'The package.json conflicts can probably be fixed by using ' +
+        'the "combine" merge strategy.\n'
+    )
+    console.log()
+    // TODO: Implement
+    // Potential help/ideas might be found here:
+    //   https://stackoverflow.com/a/60586875/88106
+    // Or, since we know these are package.json diffs with a fairly simple
+    // format, we might just be able to do look at the different versions,
+    // use semver or something to figure out what the new version should be,
+    // and then just replace the version number in the file.
+  }
+
+  await question(
+    'The script could not automatically fix the cherry-pick ' +
+      'conflicts.\nPlease fix them manually in a separate console and ' +
+      'then press any key to let the script continue with ' +
+      '`git cherry-pick --continue` >'
+  )
+  console.log()
+
+  // We told the user to not run `git cherry-pick --continue`, but users can
+  // never be trusted ;) So let's make sure the script doesn't crash if
+  // `--continue` fails
+  await $`git cherry-pick --continue --no-edit`.nothrow()
 }
 
 async function handleYarnLockConflicts() {

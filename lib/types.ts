@@ -1,6 +1,6 @@
 export interface Range {
-  to: string
   from: string
+  to: string
 }
 
 export type CherryPickAnswer = "yes" | "no" | "skip"
