@@ -13,7 +13,14 @@ import {
   resolveSymmetricDifference,
   unwrap,
 } from '../lib/releaseLib.js'
-import { CherryPickAnswer, Range } from '../lib/types.js'
+import {
+  AnnotatedCommit,
+  CherryPickAnswer,
+  CommitTriageData,
+  Range,
+  TriageData,
+} from '../lib/types.js'
+import { isErrorWithCode } from '../lib/utils.js'
 
 export function setTriageCwd(cwd: string) {
   $.cwd = cwd
@@ -55,7 +62,7 @@ export async function triageRange(range: Range) {
       Object.entries(fs.readJSONSync(commitTriageDataPath, 'utf-8'))
     )
   } catch (e) {
-    if (e.code === 'ENOENT') {
+    if (isErrorWithCode(e) && e.code === 'ENOENT') {
       commitTriageData = new Map()
     } else {
       throw e
@@ -95,10 +102,13 @@ export async function triageRange(range: Range) {
   )
 
   spinner.text = 'Resolving the symmetric difference'
-  const commits = await resolveSymmetricDifference(lines, {
-    range,
-  })
+  console.time('resolveSymmetricDifference')
+  const commits = await resolveSymmetricDifference(lines, range)
   spinner.stop()
+
+  console.log()
+  console.timeEnd('resolveSymmetricDifference')
+  console.log()
 
   const commitsToTriage = await resolveCommitsToTriage({
     commits,
@@ -141,18 +151,17 @@ export async function triageRange(range: Range) {
   }
 }
 
-/**
- * @param {{
- *   commits: Commit[]
- *   commitTriageData: CommitTriageData,
- *   targetBranch: string,
- * }} options
- */
+interface ResolveCommitsToTriageOptions {
+  commits: TriageData[]
+  commitTriageData: CommitTriageData
+  range: Range
+}
+
 export async function resolveCommitsToTriage({
   commits,
   commitTriageData,
   range,
-}) {
+}: ResolveCommitsToTriageOptions) {
   const logs: Array<string> = []
 
   const commitHashes = commits.map((commit) => commit.hash)
@@ -164,7 +173,7 @@ export async function resolveCommitsToTriage({
     if (!commitHashes.includes(hash)) {
       logs.push(
         `✨ ${chalk.cyan(
-          commitTriageData.get(hash).message
+          commitTriageData.get(hash)?.message
         )} was cherry picked cleanly`
       )
       commitTriageData.delete(hash)
@@ -179,9 +188,9 @@ export async function resolveCommitsToTriage({
   )
 
   for (const [hash, triageData] of needsCherryPick) {
-    const { ref } = commits.find((commit) => commit.hash === hash)
+    const commitWithHash = commits.find((commit) => commit.hash === hash)
 
-    if (ref === range.to) {
+    if (commitWithHash?.ref === range.to) {
       logs.push(
         `🐙 ${chalk.cyan(triageData.message)} was cherry picked with changes`
       )
@@ -204,21 +213,29 @@ export async function resolveCommitsToTriage({
   // - at this point, annotated commits that have a `ref` that's the same as the target branch have already been cherry picked
   // - now that the commit triage data is up to date, any annotated commits that aren't in it haven't been triaged
   return commits
-    .filter((commit) => commit.type === 'commit')
+    .filter(
+      (commit): commit is AnnotatedCommit =>
+        commit.type === 'commit' && !!commit.message
+    )
     .filter((commit) => commit.ref !== range.to)
     .filter((commit) => !commitTriageData.has(commit.hash))
 }
 
+interface TriageCommitsOptions {
+  commits: AnnotatedCommit[]
+  commitTriageData: CommitTriageData
+  range: Range
+}
+
 /**
- * Given an array of commit objects, ask if they need to be cherry picked and update the commit triage data in response.
- *
- * @param {{
- *   commitsToTriage: AnnotatedCommit[],
- *   commitTriageData: CommitTriageData,
- *   range: Range,
- * }} options
+ * Given an array of commit objects, ask if they need to be cherry picked and
+ * update the commit triage data in response.
  */
-export async function triageCommits({ commits, commitTriageData, range }) {
+export async function triageCommits({
+  commits,
+  commitTriageData,
+  range,
+}: TriageCommitsOptions) {
   consoleBoxen(
     `🐙 New commit(s)`,
     [
@@ -250,7 +267,7 @@ export async function triageCommits({ commits, commitTriageData, range }) {
       ].join('\n')
 
       let answer: CherryPickAnswer | 'open' = 'no'
-      if (!['RSC', 'SSR', 'v7.0.0'].includes(commit.milestone)) {
+      if (!['RSC', 'SSR', 'v7.0.0'].includes(commit.milestone || '')) {
         const result = await prompts({
           type: 'text',
           name: 'answer',

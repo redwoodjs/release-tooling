@@ -10,23 +10,8 @@ import { ProcessOutput } from 'zx'
 import 'dotenv/config'
 
 import { PR_MILESTONE_CACHE_PATH } from './constants.js'
-import { Range } from './types.js'
-
-/**
- * @typedef {{
- *   line: string,
- *   ref: string,
- *   type: 'commit' | 'ui' | 'release-chore' | 'tag'
- *   pretty: string,
- *   needsCherryPick?: boolean,
- * }} Commit
- *
- * @typedef {Map<string, { message: string, needsCherryPick: boolean }>} CommitTriageData
- *
- * @typedef {{ from: string, to: string }} Range
- */
-
-// ─── IO ──────────────────────────────────────────────────────────────────────
+import { CommitTriageData, Range, TriageData } from './types.js'
+import { isErrorWithCode, isErrorWithStatus } from './utils.js'
 
 // A string of dashes that spans the width of the user's terminal terminal.
 export const separator = chalk.dim('-'.repeat(process.stdout.columns))
@@ -65,11 +50,7 @@ export function unwrap(processOutput: ProcessOutput) {
   return processOutput.stdout.trim()
 }
 
-/**
- * @param {string} title
- * @param {string} message
- */
-export function consoleBoxen(title, message) {
+export function consoleBoxen(title: string, message: string) {
   console.log()
   console.log(
     boxen(message, {
@@ -101,11 +82,7 @@ export function isYes(res: string) {
   return ['', 'Y', 'y'].includes(res)
 }
 
-/**
- * Wrapper around `prompts` to exit on crtl c.
- *
- * @template Name
- */
+/** Wrapper around `prompts` to exit on ctrl c */
 export function prompts(
   promptsObject: PromptObject,
   promptsOptions: Options = {}
@@ -120,10 +97,8 @@ export function prompts(
 
 /**
  * Basically runs `git fetch origin` on branches with safety checks and logging.
- *
- * @param {string[]} branches
  */
-export async function resolveBranchStatuses(branches) {
+export async function resolveBranchStatuses(branches: Array<string>) {
   const spinner = getSpinner(
     `Resolving branch statuses for: ${branches
       .map((branch) => chalk.magenta(branch))
@@ -162,9 +137,10 @@ export async function resolveBranchStatuses(branches) {
 
   spinner.stop()
 
-  result = await handleBranchesToCommits(branchesToCommits, {
-    redwoodRemote: result.redwoodRemote,
-  })
+  result = await handleBranchesToCommits(
+    branchesToCommits,
+    result.redwoodRemote
+  )
 
   return result
 }
@@ -205,6 +181,14 @@ export async function getRedwoodRemote() {
   return result
 }
 
+interface BranchStatus {
+  existsOnRedwoodRemote: boolean
+  upToDate?: boolean
+  diverged?: boolean
+  commitsExclusiveToLocalBranch?: number
+  commitsExclusiveToRemoteBranch?: number
+}
+
 /**
  * Build an object like...
  *
@@ -220,56 +204,49 @@ export async function getRedwoodRemote() {
  *   next: ...
  * }
  * ```
- *
- * @param {string[]} branches
  */
 export async function getBranchesToCommits(
   branches: Array<string>,
   redwoodRemote: string
 ) {
-  return branches.reduce(async (branchesToCommitsPromise, branch) => {
-    const branchesToCommits = await branchesToCommitsPromise
+  return branches.reduce<Promise<Record<string, BranchStatus>>>(
+    async (branchesToCommitsPromise, branch) => {
+      const branchesToCommits = await branchesToCommitsPromise
 
-    if (!(await branchExistsOnRedwoodRemote(branch, redwoodRemote))) {
-      branchesToCommits[branch] = { existsOnRedwoodRemote: false }
-    } else {
-      const commitsExclusiveToLocalBranch = +unwrap(
-        await $`git rev-list ${redwoodRemote}/${branch}..${branch} --count`
-      )
-      const commitsExclusiveToRemoteBranch = +unwrap(
-        await $`git rev-list ${branch}..${redwoodRemote}/${branch} --count`
-      )
+      if (!(await branchExistsOnRedwoodRemote(branch, redwoodRemote))) {
+        branchesToCommits[branch] = { existsOnRedwoodRemote: false }
+      } else {
+        const commitsExclusiveToLocalBranch = +unwrap(
+          await $`git rev-list ${redwoodRemote}/${branch}..${branch} --count`
+        )
+        const commitsExclusiveToRemoteBranch = +unwrap(
+          await $`git rev-list ${branch}..${redwoodRemote}/${branch} --count`
+        )
 
-      branchesToCommits[branch] = {
-        existsOnRedwoodRemote: true,
-        upToDate:
-          commitsExclusiveToLocalBranch === 0 &&
-          commitsExclusiveToRemoteBranch === 0,
-        diverged:
-          commitsExclusiveToLocalBranch > 0 &&
-          commitsExclusiveToRemoteBranch > 0,
-        commitsExclusiveToLocalBranch,
-        commitsExclusiveToRemoteBranch,
+        branchesToCommits[branch] = {
+          existsOnRedwoodRemote: true,
+          upToDate:
+            commitsExclusiveToLocalBranch === 0 &&
+            commitsExclusiveToRemoteBranch === 0,
+          diverged:
+            commitsExclusiveToLocalBranch > 0 &&
+            commitsExclusiveToRemoteBranch > 0,
+          commitsExclusiveToLocalBranch,
+          commitsExclusiveToRemoteBranch,
+        }
       }
-    }
 
-    return branchesToCommits
-  }, Promise.resolve({}))
+      return branchesToCommits
+    },
+    Promise.resolve({})
+  )
 }
 
-/**
- * @param {string} branch
- */
-export async function branchExistsOnRedwoodRemote(branch, redwoodRemote) {
+export async function branchExistsOnRedwoodRemote(
+  branch: string,
+  redwoodRemote: string
+) {
   return !!unwrap(await $`git ls-remote --heads ${redwoodRemote} ${branch}`)
-}
-
-interface BranchStatus {
-  existsOnRedwoodRemote: boolean
-  upToDate: boolean
-  diverged: boolean
-  commitsExclusiveToLocalBranch: number
-  commitsExclusiveToRemoteBranch: number
 }
 
 /**
@@ -278,7 +255,7 @@ interface BranchStatus {
  */
 export async function handleBranchesToCommits(
   branchesToCommits: Record<string, BranchStatus>,
-  { redwoodRemote }
+  redwoodRemote: string
 ) {
   const result: any = {
     error: undefined,
@@ -357,12 +334,9 @@ export const defaultGitLogOptions = [
  *
  * For a quick reference on the `...` syntax,
  * see https://stackoverflow.com/questions/462974/what-are-the-differences-between-double-dot-and-triple-dot-in-git-com.
- *
- * @param {string} leftRef
- * @param {string} rightRef
  */
 export async function getSymmetricDifference(
-  range,
+  range: Range,
   { gitLogOptions = undefined } = {}
 ) {
   return unwrap(
@@ -373,42 +347,29 @@ export async function getSymmetricDifference(
 }
 
 /**
- * Resolves the return of `getSymmetricDifference`. `getSymmetricDifference` gets us the commits that are different between two refs,
- * but some of those commits are...
+ * Resolves the return of `getSymmetricDifference`. `getSymmetricDifference`
+ * gets us the commits that are different between two refs, but some of those
+ * commits are...
  *
  * - decorative (some lines are just UI when `--graph` is passed)
  * - virtually the same (only the `yarn.lock` has changed)
  * - aren't meant to be cherry picked
  * - etc.
- *
- * @param {string[]} lines
- * @param {{
- *   range: { from: string, to: string },
- *   refsToColors?: Record<string, () => string>
- * }} options
- *
- * @return {Commit[]}
  */
 export async function resolveSymmetricDifference(
-  lines,
-  { range, refsToColorFunctions = {} }
+  lines: Array<string>,
+  range: Range
 ) {
   const logger = getLogger()
 
-  // We make a copy and reverse so that the refs are in ascending order (v6.3.0, v6.3.1, v6.3.2, etc)
-  // so that we can break out of a loop later on earlier than otherwise.
-  const refs = Array.isArray(range.to) ? [...range.to] : [range.to]
-  refs.reverse()
-
-  // Set defaults.
-  for (const ref of refs) {
-    refsToColorFunctions[ref] ??= chalk.dim.bgBlue
+  const refsToColorFunctions = {
+    [range.to]: chalk.dim.bgBlue,
   }
 
   const commits = await Promise.all(
     lines.map((line) =>
       resolveLine(line, {
-        range: { ...range, to: refs },
+        range,
         refsToColorFunctions,
         logger,
       })
@@ -419,27 +380,38 @@ export async function resolveSymmetricDifference(
 }
 
 export async function resolveLine(
-  line,
-  { range, refsToColorFunctions, logger }
+  line: string,
+  {
+    range,
+    refsToColorFunctions,
+    logger,
+  }: {
+    range: Range | RangeSteps
+    refsToColorFunctions: Record<string, (text: string) => string>
+    logger: (...args: any[]) => void
+  }
 ) {
   const logs: Array<string> = []
 
-  const commit: any = {
+  let commit = {
     line,
-    type: 'commit',
+    type: 'commit' as const,
     ref: range.from,
     pretty: line,
+    hash: '',
+    message: '',
   }
 
-  // This functions modifies the commit object above.
-  await resolveCommitType(commit, { logs })
+  commit = await resolveCommitType(commit, { logs })
 
   if (['ui', 'tag', 'release-chore'].includes(commit.type)) {
     return commit
   }
 
+  const rangeTo = Array.isArray(range.to) ? range.to : [range.to]
+
   // We check refs in order from least recent to most and break once we find one.
-  for (const ref of range.to) {
+  for (const ref of rangeTo) {
     logs.push(
       ['', `🔎 checking if commit is in ${chalk.magenta(ref)}`].join('\n')
     )
@@ -469,8 +441,20 @@ export async function resolveLine(
   return commit
 }
 
-async function resolveCommitType(commit, { logs }) {
+interface CommitLine {
+  line: string
+  ref: string
+}
+
+async function resolveCommitType(
+  // { line, ref }: CommitLine,
+  commitLine: CommitLine,
+  { logs }: { logs: Array<string> }
+) {
+  // ): Promise<TriageData> {
   logs.push(separator)
+
+  const commit: any = { ...commitLine }
 
   if (isLineGitLogUI(commit.line)) {
     commit.type = 'ui'
@@ -478,7 +462,7 @@ async function resolveCommitType(commit, { logs }) {
 
     logs.push('🎄 this line is just `git log` ui')
 
-    return
+    return commit
   }
 
   // Every commit has a hash so we're not bothering with optional chaining here.
@@ -494,7 +478,7 @@ async function resolveCommitType(commit, { logs }) {
 
     logs.push('🔖 this commit is an annotated tag')
 
-    return
+    return commit
   }
 
   if (isCommitReleaseChore(commit.line)) {
@@ -503,7 +487,7 @@ async function resolveCommitType(commit, { logs }) {
 
     logs.push('🧹 this commit is a release chore')
 
-    return
+    return commit
   }
 
   if (commit.message.startsWith('Revert')) {
@@ -512,14 +496,14 @@ async function resolveCommitType(commit, { logs }) {
 
     logs.push('↩️ this commit reverts a previous commit')
 
-    return
+    return commit
   }
 
   // Not all commits are associated with a PR.
   commit.pr = commit.message.match(commitRegExps.pr)?.groups.pr
 
   if (!commit.pr) {
-    return
+    return commit
   }
 
   commit.url = `https://github.com/redwoodjs/redwood/pull/${commit.pr}`
@@ -541,6 +525,8 @@ async function resolveCommitType(commit, { logs }) {
   commit.pretty = commit.line
 
   logs.push('🔖 this commit is a pr with a milestone')
+
+  return commit
 }
 
 /**
@@ -551,10 +537,8 @@ async function resolveCommitType(commit, { logs }) {
  * |\  # This is just UI
  * | * 3a4b5c6 (HEAD -> release/3.6, origin/release/3.6) chore: update dependencies
  * ```
- *
- * @param {string} line
  */
-function isLineGitLogUI(line) {
+function isLineGitLogUI(line: string) {
   // TODO: test this fn for sure. can't i cross check against the git docs?
   const marks = ['o', ' /', '|\\', '| o', '|\\|', '|/']
   return marks.some((mark) => line.startsWith(mark))
@@ -567,11 +551,10 @@ const commitRegExps = {
 }
 
 /**
- * See if a commit is a release chore via it's message. Note that these are different than PRs with the chore milestone.
- *
- * @param {string} line
+ * See if a commit is a release chore via it's message. Note that these are
+ * different than PRs with the chore milestone.
  */
-function isCommitReleaseChore(line) {
+function isCommitReleaseChore(line: string) {
   const choreMessages = [
     'chore: update yarn.lock',
     'Version docs',
@@ -586,10 +569,8 @@ function isCommitReleaseChore(line) {
 
 /**
  * Square brackets (`[` or `]`) in commit messages need to be escaped.
- *
- * @param {string} message
  */
-function sanitizeMessage(message) {
+function sanitizeMessage(message: string) {
   return message.replace('[', '\\[').replace(']', '\\]')
 }
 
@@ -602,7 +583,7 @@ export async function getPRMilestoneFromURL(prURL: string) {
         Object.entries(fs.readJSONSync(PR_MILESTONE_CACHE_PATH, 'utf-8'))
       )
     } catch (e) {
-      if (e.code === 'ENOENT') {
+      if (isErrorWithCode(e) && e.code === 'ENOENT') {
         prMilestoneCache = new Map()
       } else {
         throw e
@@ -640,12 +621,16 @@ const getPRMilestoneFromURLQuery = `
 `
 
 interface ReportCommitStatusesOptions {
-  commits: Array<any>
-  commitTriageData: Set<any>
+  commits: Array<TriageData>
+  commitTriageData: CommitTriageData
   range: Range
 }
 
-export function reportCommitStatuses({ commits, commitTriageData, range }) {
+export function reportCommitStatuses({
+  commits,
+  commitTriageData,
+  range,
+}: ReportCommitStatusesOptions) {
   // We still have to color commits based on their cherry pick status.
   // First, get the ones to color:
   const commitsToColor = commits
@@ -670,7 +655,10 @@ export function reportCommitStatuses({ commits, commitTriageData, range }) {
   }
 
   for (const commit of commitsToColor) {
-    const { needsCherryPick, comment } = commitTriageData.get(commit.hash)
+    const { needsCherryPick, comment } = commitTriageData.get(commit.hash) || {
+      needsCherryPick: undefined,
+      comment: undefined,
+    }
 
     if (needsCherryPick === 'yes') {
       commit.pretty = chalk.green(commit.line)
@@ -683,21 +671,16 @@ export function reportCommitStatuses({ commits, commitTriageData, range }) {
     commit.needsCherryPick = needsCherryPick
   }
 
+  const prettyTo = chalk.magenta(range.to)
   consoleBoxen(
     '🔑 Key',
     [
-      `${chalk.green('■')} Needs to be cherry picked into ${chalk.magenta(
-        range.to
-      )}`,
+      `${chalk.green('■')} Needs to be cherry picked into ${prettyTo}`,
       `${chalk.yellow('■')} Skipped (see comments for details)`,
       $.verbose &&
-        `${chalk.blue('■')} Was cherry picked into ${chalk.magenta(
-          range.to
-        )} with changes`,
+        `${chalk.blue('■')} Was cherry picked into ${prettyTo} with changes`,
       $.verbose &&
-        `${chalk.dim.red('■')} Shouldn't be cherry picked into ${chalk.magenta(
-          range.to
-        )}`,
+        `${chalk.dim.red('■')} Shouldn't be cherry picked into ${prettyTo}`,
       $.verbose && `${chalk.dim('■')} Chore commit or purely-decorative line`,
     ]
       .filter(Boolean)
@@ -708,7 +691,7 @@ export function reportCommitStatuses({ commits, commitTriageData, range }) {
     commits
       .filter(
         (commit) =>
-          $.verbose || ['yes', 'skip'].includes(commit.needsCherryPick)
+          $.verbose || ['yes', 'skip'].includes(commit.needsCherryPick || 'no')
       )
       .map(({ pretty }) => pretty)
       .join('\n')
@@ -758,7 +741,8 @@ export async function branchExists(branch: string) {
 
 // ─── Github ──────────────────────────────────────────────────────────────────
 
-let octokit
+// TODO: type this
+let octokit: any
 
 export async function getOctokit() {
   if (octokit) {
@@ -783,7 +767,7 @@ export async function getOctokit() {
   try {
     await octokit.graphql(`{ viewer { login } }`)
   } catch (e) {
-    if (e.status === 401) {
+    if (isErrorWithStatus(e) && e.status === 401) {
       throw new Error(
         `The ${chalk.magenta(
           'GITHUB_TOKEN'
@@ -797,10 +781,13 @@ export async function getOctokit() {
   return octokit
 }
 
-/**
- * @param {string} title
- */
-export async function getMilestones() {
+interface Milestone {
+  title: string
+  id: string
+  number: number
+}
+
+export async function getMilestones(): Promise<Array<Milestone>> {
   const octokit = await getOctokit()
 
   const {
@@ -825,13 +812,14 @@ export async function getMilestones() {
 }
 
 // TODO: this needs to be recursive.
-/**
- * @param {string} milestoneTitle
- */
-export async function getPRsWithMilestone(milestoneTitle) {
+export async function getPRsWithMilestone(milestoneTitle: string) {
   const milestone = (await getMilestones()).find(
     (milestone) => milestone.title === milestoneTitle
   )
+
+  if (!milestone) {
+    throw new Error(`No milestone found with title "${milestoneTitle}"`)
+  }
 
   const octokit = await getOctokit()
 
@@ -839,7 +827,7 @@ export async function getPRsWithMilestone(milestoneTitle) {
     node: {
       pullRequests: { nodes },
     },
-  } = /** @type {GetPullRequestIdsRes} */ await octokit.graphql(
+  } = await octokit.graphql(
     `
         query ($milestoneId: ID!) {
           node(id: $milestoneId) {
@@ -878,30 +866,4 @@ export async function getPRsWithMilestone(milestoneTitle) {
 
 export async function openCherryPickPRs() {
   await $`open https://github.com/redwoodjs/redwood/pulls?q=is%3Apr+is%3Aopen+label%3Acherry-pick`
-}
-
-// ─── Misc ────────────────────────────────────────────────────────────────────
-
-/**
- * Find a file by walking up parent directories.
- *
- * @param {string} file
- * @param {string} [startingDirectory=process.cwd()]
- * @returns {string | null}
- */
-export function findUp(file, startingDirectory = process.cwd()) {
-  const possibleFilepath = path.join(startingDirectory, file)
-
-  if (fs.existsSync(possibleFilepath)) {
-    return possibleFilepath
-  }
-
-  const parentDirectory = path.dirname(startingDirectory)
-
-  // If we've reached the root directory, there's no file to be found.
-  if (parentDirectory === startingDirectory) {
-    return null
-  }
-
-  return findUp(file, parentDirectory)
 }

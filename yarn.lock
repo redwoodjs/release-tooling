@@ -2377,6 +2377,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/semver@npm:^7.5.6":
+  version: 7.5.6
+  resolution: "@types/semver@npm:7.5.6"
+  checksum: 196dc32db5f68cbcde2e6a42bb4aa5cbb100fa2b7bd9c8c82faaaf3e03fbe063e205dbb4f03c7cdf53da2edb70a0d34c9f2e601b54281b377eb8dc1743226acd
+  languageName: node
+  linkType: hard
+
 "@types/stack-utils@npm:^2.0.0":
   version: 2.0.3
   resolution: "@types/stack-utils@npm:2.0.3"
@@ -7802,6 +7809,7 @@ __metadata:
     "@types/jscodeshift": "npm:0.11.6"
     "@types/ncp": "npm:2.0.8"
     "@types/prompts": "npm:2.4.8"
+    "@types/semver": "npm:^7.5.6"
     boxen: "npm:5.1.2"
     core-js: "npm:3.34.0"
     dependency-cruiser: "npm:15.5.0"

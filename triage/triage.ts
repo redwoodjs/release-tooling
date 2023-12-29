@@ -10,7 +10,7 @@
 // - [ ] --verbose (-v) controls verbosity
 // - [ ] --verbose (-v) defaults to false
 //
-// - [ ] --skip-branch-check skips the branch status check
+// - [ ] --skip-branch-status-check skips the branch status check
 
 import util from 'node:util'
 
@@ -27,6 +27,7 @@ import {
 } from '../lib/releaseLib.js'
 import type { Range } from '../lib/types.js'
 import { setTriageCwd, triageRange } from './triageLib.js'
+import { isErrorWithMessage } from '../lib/utils.js'
 
 async function main() {
   let options: Awaited<ReturnType<typeof parseArgs>>
@@ -34,7 +35,10 @@ async function main() {
   try {
     options = await parseArgs()
   } catch (e) {
-    consoleBoxen('👷 Heads up', e.message)
+    if (isErrorWithMessage(e)) {
+      consoleBoxen('👷 Heads up', e.message)
+    }
+
     process.exitCode = 1
     return
   }
@@ -62,7 +66,10 @@ async function main() {
   try {
     await triageRange(range)
   } catch (e) {
-    consoleBoxen('👷 Heads up', e.message)
+    if (isErrorWithMessage(e)) {
+      consoleBoxen('👷 Heads up', e.message)
+    }
+
     process.exitCode = 1
     return
   }
@@ -73,8 +80,9 @@ export async function parseArgs() {
     allowPositionals: true,
 
     options: {
-      // Seems like a limitation of `parseArgs`, but we can't specify `check-branches: { default: true }`
-      // because there's no way to unset it at the CLI.
+      // Seems like a limitation of `parseArgs`, but we can't specify
+      // `branch-status-check: { default: true }` because there's no way to
+      // unset it at the CLI.
       'skip-branch-status-check': {
         type: 'boolean',
       },
@@ -147,13 +155,13 @@ export async function parseArgs() {
     range.to = to
   }
 
-  // Spreading `values` here adds `no-check-branches-statuses`. Instead we add them by hand, specifying defaults:
+  // Spreading `values` here adds `no-skip-branch-status-check`. Instead we add them by hand, specifying defaults:
   //
   // - if range isn't explicitly set, default to `main...next`
-  // - if `--no-check-branches-statuses` isn't explicitly set, default to `true`.
+  // - if `--no-skip-branch-status-check` isn't explicitly set, default to `true`.
   return {
     range,
-    checkBranchStatuses: !values['skip-check-branch-check'] ?? true,
+    checkBranchStatuses: !values['skip-branch-status-check'] ?? true,
     verbose: values.verbose,
   }
 }
