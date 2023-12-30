@@ -300,10 +300,10 @@ export async function handleBranchesToCommits(
       if (
         status.commitsExclusiveToRemoteBranch &&
         isYes(
-          await question(`Ok to \`git fetch\` ${chalk.magenta(branch)}? [Y/n] `)
+          await question(`Ok to \`git pull\` ${chalk.magenta(branch)}? [Y/n] `)
         )
       ) {
-        await $`git fetch ${redwoodRemote} ${branch}:${branch}`
+        await $`git pull ${redwoodRemote} ${branch}:${branch}`
       }
     }
   }
