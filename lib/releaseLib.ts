@@ -1,6 +1,6 @@
 import boxen from 'boxen'
 import { Octokit } from 'octokit'
-import ora from 'ora'
+import ora, { Ora } from 'ora'
 import promptsImport from 'prompts'
 import type { Options, PromptObject } from 'prompts'
 import semver from 'semver'
@@ -363,7 +363,13 @@ export async function getSymmetricDifference(
  */
 export async function resolveSymmetricDifference(
   lines: Array<string>,
-  range: Range
+  range: Range,
+  spinner:
+    | Ora
+    | {
+        stop: () => void
+        text: string
+      }
 ) {
   const logger = getLogger()
 
@@ -371,12 +377,20 @@ export async function resolveSymmetricDifference(
     [range.to]: chalk.dim.bgBlue,
   }
 
+  let completedLines = 0
+
   const commits = await Promise.all(
     lines.map((line) =>
       resolveLine(line, {
         range,
         refsToColorFunctions,
         logger,
+      }).then((commit) => {
+        spinner.text =
+          `Resolving the symmetric difference (${++completedLines} of ` +
+          `${lines.length} log lines processed)`
+
+        return commit
       })
     )
   )

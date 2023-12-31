@@ -101,14 +101,13 @@ export async function triageRange(range: Range) {
     }
   )
 
-  spinner.text = 'Resolving the symmetric difference'
-  console.time('resolveSymmetricDifference')
-  const commits = await resolveSymmetricDifference(lines, range)
+  spinner.text = `Resolving the symmetric difference (0 of ${lines.length} log lines processed)`
+  console.time('Resolving the symmetric difference took')
+  const commits = await resolveSymmetricDifference(lines, range, spinner)
   spinner.stop()
 
   console.log()
-  console.timeEnd('resolveSymmetricDifference')
-  console.log()
+  console.timeEnd('Resolving the symmetric difference took')
 
   const commitsToTriage = await resolveCommitsToTriage({
     commits,
