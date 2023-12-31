@@ -24,6 +24,8 @@ import {
   resolveBranchStatuses,
   setVerbosity,
   setCwd,
+  switchToMainBranch,
+  assertCleanBranch,
 } from '../lib/releaseLib.js'
 import type { Range } from '../lib/types.js'
 import { setTriageCwd, triageRange } from './triageLib.js'
@@ -31,6 +33,13 @@ import { isErrorWithMessage } from '../lib/utils.js'
 
 async function main() {
   let options: Awaited<ReturnType<typeof parseArgs>>
+
+  setCwd('../redwood')
+  setTriageCwd('../redwood')
+  setVerbosity(false)
+
+  await switchToMainBranch()
+  await assertCleanBranch()
 
   try {
     options = await parseArgs()
@@ -46,8 +55,6 @@ async function main() {
   const { verbose, checkBranchStatuses, range } = options
 
   setVerbosity(!!verbose)
-  setCwd('../redwood')
-  setTriageCwd('../redwood')
 
   // One gotcha when triaging commits: you don't have the latest branches.
   if (checkBranchStatuses) {
@@ -59,9 +66,6 @@ async function main() {
       return
     }
   }
-
-  // TODO: Check to make sure the redwood repo doesn't have any changed or
-  // untracked files.
 
   try {
     await triageRange(range)

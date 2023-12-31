@@ -872,3 +872,53 @@ export async function getPRsWithMilestone(milestoneTitle: string) {
 export async function openCherryPickPRs() {
   await $`open https://github.com/redwoodjs/redwood/pulls?q=is%3Apr+is%3Aopen+label%3Acherry-pick`
 }
+
+export async function switchToMainBranch() {
+  const branch = unwrap(await $`git branch --show-current`)
+
+  if (branch !== 'main') {
+    // TODO: Just warn and offer to switch if there are no current changes
+    const prettyMain = chalk.magenta('main')
+    const prettyBranch = branch
+      ? chalk.magenta(branch)
+      : chalk.magenta('<detached HEAD>')
+
+    if (await isCleanBranch()) {
+      console.log(
+        `The redwood repo is currently on the ${prettyBranch} branch. It ` +
+          `needs to be on ${prettyMain} when triaging.`
+      )
+
+      if (isYes(await question(`Ok to switch to ${prettyMain}? [Y/n] `))) {
+        return await $`git switch main`
+      }
+    } else {
+      consoleBoxen(
+        '🚨 Wrong branch',
+        `The redwood repo has to be on the ${prettyMain} branch. Currently on ${prettyBranch}`
+      )
+    }
+
+    process.exit(1)
+  }
+}
+
+export async function isCleanBranch() {
+  const status = unwrap(await $`git status --porcelain`)
+
+  return status === ''
+}
+
+export async function assertCleanBranch() {
+  if (!(await isCleanBranch())) {
+    consoleBoxen(
+      '🚨 Dirty branch',
+      [
+        'The redwood repo has to be on a clean branch.',
+        'Run `git status` to see what needs to be committed.',
+      ].join('\n')
+    )
+
+    process.exit(1)
+  }
+}
