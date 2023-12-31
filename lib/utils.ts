@@ -1,7 +1,9 @@
-import fs from 'node:fs'
+import fs from 'fs-extra'
 import path from 'node:path'
 
-export function isErrorWithCode(error: unknown): error is Error & { code: string } {
+export function isErrorWithCode(
+  error: unknown
+): error is Error & { code: string } {
   return (
     typeof error === 'object' &&
     error !== null &&
@@ -10,7 +12,9 @@ export function isErrorWithCode(error: unknown): error is Error & { code: string
   )
 }
 
-export function isErrorWithMessage(error: unknown): error is Error & { message: string } {
+export function isErrorWithMessage(
+  error: unknown
+): error is Error & { message: string } {
   return (
     typeof error === 'object' &&
     error !== null &&
@@ -19,7 +23,9 @@ export function isErrorWithMessage(error: unknown): error is Error & { message: 
   )
 }
 
-export function isErrorWithStatus(error: unknown): error is Error & { status: number } {
+export function isErrorWithStatus(
+  error: unknown
+): error is Error & { status: number } {
   return (
     typeof error === 'object' &&
     error !== null &&
@@ -44,4 +50,10 @@ export function findUp(file: string, startingDirectory = process.cwd()) {
   }
 
   return findUp(file, parentDirectory)
+}
+
+export function writeMapToJson(path: URL, data: Map<string, unknown>) {
+  return fs.writeJSONSync(path, Object.fromEntries(data), {
+    spaces: 2,
+  })
 }

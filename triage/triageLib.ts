@@ -20,7 +20,7 @@ import {
   Range,
   TriageData,
 } from '../lib/types.js'
-import { isErrorWithCode } from '../lib/utils.js'
+import { isErrorWithCode, writeMapToJson } from '../lib/utils.js'
 
 export function setTriageCwd(cwd: string) {
   $.cwd = cwd
@@ -51,7 +51,8 @@ export async function triageRange(range: Range) {
   //   needsCherryPick: false
   // }
   // ```
-  let commitTriageData
+  let commitTriageData: Map<string, any>
+
   const commitTriageDataPath = new URL(
     `./${fileNamePrefix}.commitTriageData.json`,
     TRIAGE_DATA_PATH
@@ -63,11 +64,26 @@ export async function triageRange(range: Range) {
     )
   } catch (e) {
     if (isErrorWithCode(e) && e.code === 'ENOENT') {
-      commitTriageData = new Map()
+      commitTriageData = new Map<string, any>()
     } else {
       throw e
     }
   }
+
+  const writeCommitTriageData = () => {
+    if (commitTriageData.size || prMilestoneCache.size) {
+      console.log('writing commit triage data')
+      writeMapToJson(commitTriageDataPath, commitTriageData)
+      writeMapToJson(PR_MILESTONE_CACHE_PATH, prMilestoneCache)
+      commitTriageData.clear()
+      prMilestoneCache.clear()
+    }
+  }
+
+  const signals = ['exit', 'SIGINT', 'SIGQUIT', 'SIGTERM']
+  signals.forEach((eventType) => {
+    process.on(eventType, writeCommitTriageData)
+  })
 
   // In git, the "symmetric difference" (syntactically, three dots: `...`) is what's different between two branches.
   // It's the commits one branch has that the other doesn't, and vice versa:
@@ -90,16 +106,13 @@ export async function triageRange(range: Range) {
   const lines = await getSymmetricDifference(range)
 
   // Save the result for QA. (See `./triage/triageQA.mjs`.)
-  await fs.writeJSON(
-    new URL(
-      `../triage-data/${fileNamePrefix}.symmetricDifference.json`,
-      import.meta.url
-    ),
-    lines,
-    {
-      spaces: 2,
-    }
+  const symmetricDifferencePath = new URL(
+    `../triage-data/${fileNamePrefix}.symmetricDifference.json`,
+    import.meta.url
   )
+  await fs.writeJSON(symmetricDifferencePath, lines, {
+    spaces: 2,
+  })
 
   spinner.text = `Resolving the symmetric difference (0 of ${lines.length} log lines processed)`
   console.time('Resolving the symmetric difference took')
@@ -129,22 +142,10 @@ export async function triageRange(range: Range) {
   reportCommitStatuses({ commits, commitTriageData, range })
 
   if (commitTriageData.size || prMilestoneCache.size) {
-    fs.writeJSONSync(
-      commitTriageDataPath,
-      Object.fromEntries(commitTriageData),
-      {
-        spaces: 2,
-      }
-    )
-    fs.writeJSONSync(
-      PR_MILESTONE_CACHE_PATH,
-      Object.fromEntries(prMilestoneCache),
-      {
-        spaces: 2,
-      }
-    )
+    writeMapToJson(commitTriageDataPath, commitTriageData)
+    writeMapToJson(PR_MILESTONE_CACHE_PATH, prMilestoneCache)
 
-    await cd(fileURLToPath(TRIAGE_DATA_PATH))
+    cd(fileURLToPath(TRIAGE_DATA_PATH))
     await $`git commit -am "triage ${new Date().toISOString()}"`
     await $`git push`
   }
@@ -243,26 +244,18 @@ export async function triageCommits({
         `in the ${chalk.magenta(range.from)} branch`,
         `that isn't/aren't in the ${chalk.magenta(range.to)} branch:`,
       ].join(' '),
-      ...commits.map(({ hash, message }) => `• ${chalk.dim(hash)} ${message}`),
+      ...commits.map((commit) => commit.pretty),
     ].join('\n')
   )
 
   for (const commit of commits) {
     // eslint-disable-next-line no-constant-condition
     while (true) {
-      const prettyLine = [
-        '  •',
-        chalk.dim(commit.hash),
-        chalk.cyan(commit.message),
-        commit.milestone && chalk.yellow(`(${commit.milestone})`),
-      ]
-        .filter(Boolean)
-        .join(' ')
       const prettyTo = chalk.magenta(range.to)
       const message = [
         'Does...',
-        prettyLine,
-        `need to be cherry picked into ${prettyTo}? [Y/n/s(kip)/o(pen)] > `,
+        commit.pretty,
+        `need to be cherry picked into ${prettyTo}? [Y/n/s(kip)/o(pen)]`,
       ].join('\n')
 
       let answer: CherryPickAnswer | 'open' = 'no'

@@ -12,8 +12,10 @@ export type TriageData = {
   ref: string
   type: CommitType
   pretty: string
-  needsCherryPick?: CherryPickAnswer | undefined
   hash: string
+  author: string
+  date: string
+  needsCherryPick?: CherryPickAnswer | undefined
   message?: string | undefined
   pr?: string | undefined
   url?: string | undefined

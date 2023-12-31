@@ -316,11 +316,10 @@ export async function handleBranchesToCommits(
   return result
 }
 
-// ─── Git ─────────────────────────────────────────────────────────────────────
-
-export const defaultGitLogOptions = [
-  '--oneline',
-  '--no-abbrev-commit',
+const gitLogOptions = [
+  // zx does some magic quoting of this string, so this works even though it
+  // looks weird
+  `--format=%H %as%d %s`,
   '--left-right',
   '--graph',
   '--left-only',
@@ -340,14 +339,9 @@ export const defaultGitLogOptions = [
  * For a quick reference on the `...` syntax,
  * see https://stackoverflow.com/questions/462974/what-are-the-differences-between-double-dot-and-triple-dot-in-git-com.
  */
-export async function getSymmetricDifference(
-  range: Range,
-  { gitLogOptions = undefined } = {}
-) {
+export async function getSymmetricDifference(range: Range) {
   return unwrap(
-    await $`git log ${gitLogOptions ?? defaultGitLogOptions} ${range.from}...${
-      range.to
-    }`
+    await $`git log ${gitLogOptions} ${range.from}...${range.to}`
   ).split('\n')
 }
 
@@ -419,6 +413,8 @@ export async function resolveLine(
     pretty: line,
     hash: '',
     message: '',
+    author: '',
+    date: '',
   }
 
   commit = await resolveCommitType(commit, { logs })
@@ -484,11 +480,18 @@ async function resolveCommitType(
     return commit
   }
 
-  // Every commit has a hash so we're not bothering with optional chaining here.
   commit.hash = commit.line.match(commitRegExps.hash).groups.hash
+  commit.date = commit.line.match(commitRegExps.date).groups.date
 
-  // TODO: explain this.
-  commit.message = unwrap(await $`git log --format=%s -n 1 ${commit.hash}`)
+  // Passing `--format=%s` to git log tells git log to only print each commit's
+  // "subject", which is the first line of the commit message. Passing -n1
+  // tells git log to only show one commit. And finally passing in a commit
+  // hash makes git log start the log at that commit.
+  // So, what we're doing here is getting just the first line of the commit
+  // message for a single commit
+  commit.message = unwrap(await $`git log --format=%s -n1 ${commit.hash}`)
+
+  commit.author = unwrap(await $`git log --format=%an -n1 ${commit.hash}`)
 
   if (commitRegExps.annotatedTag.test(commit.message)) {
     commit.type = 'tag'
@@ -522,6 +525,7 @@ async function resolveCommitType(
   commit.pr = commit.message.match(commitRegExps.pr)?.groups.pr
 
   if (!commit.pr) {
+    commit.pretty = prettyLine(commit)
     return commit
   }
 
@@ -541,11 +545,30 @@ async function resolveCommitType(
   }
 
   commit.line = `${commit.line} (${commit.milestone})`
-  commit.pretty = commit.line
+  commit.pretty = prettyLine(commit)
 
   logs.push('🔖 this commit is a pr with a milestone')
 
   return commit
+}
+
+function prettyLine(commit: TriageData) {
+  const hashPretty = chalk.dim(commit.hash.slice(0, 9))
+  const prettyDate = chalk.red(commit.date)
+  const prettyMessage = chalk.cyan(commit.message)
+  const prettyAuthor = chalk.green(commit.author)
+  const prettyMilestone = chalk.yellow(`(${commit.milestone})`)
+  return [
+    '  •',
+    hashPretty,
+    prettyDate,
+    prettyMessage,
+    'by',
+    prettyAuthor,
+    commit.pr && prettyMilestone,
+  ]
+    .filter(Boolean)
+    .join(' ')
 }
 
 /**
@@ -565,6 +588,7 @@ function isLineGitLogUI(line: string) {
 
 const commitRegExps = {
   hash: /\s(?<hash>\w{40})\s/,
+  date: /\s\w{40}\s(?<date>\d{4}-\d\d-\d\d)\s/,
   pr: /\(#(?<pr>\d+)\)$/,
   annotatedTag: /^v\d.\d.\d$/,
 }
