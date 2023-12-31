@@ -27,3 +27,9 @@ blog-test-project/*
 **/meta.*.json
 
 .nx/cache
+
+# Release notes
+*_release_notes.md
+
+# Data files for QA.
+*.symmetricDifference.json
