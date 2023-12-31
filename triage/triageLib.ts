@@ -356,7 +356,6 @@ async function handleFailedCherryPick() {
         'The package.json conflicts can probably be fixed by using ' +
         'the "combine" merge strategy.\n'
     )
-    console.log()
     // TODO: Implement
     // Potential help/ideas might be found here:
     //   https://stackoverflow.com/a/60586875/88106
