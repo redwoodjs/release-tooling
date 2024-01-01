@@ -718,7 +718,7 @@ export function reportCommitStatuses({
   consoleBoxen(
     '🔑 Key',
     [
-      `${chalk.green('■')} Needs to be cherry picked into ${prettyTo}`,
+      `${chalk.green('■')} Was cherry picked into ${prettyTo}`,
       `${chalk.yellow('■')} Skipped (see comments for details)`,
       $.verbose &&
         `${chalk.blue('■')} Was cherry picked into ${prettyTo} with changes`,

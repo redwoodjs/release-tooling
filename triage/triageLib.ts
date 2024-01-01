@@ -1,6 +1,6 @@
 import { fileURLToPath } from 'node:url'
 
-import { cd, chalk, fs, question, $ } from 'zx'
+import { cd, chalk, fs, question, $, within } from 'zx'
 
 import { PR_MILESTONE_CACHE_PATH, TRIAGE_DATA_PATH } from '../lib/constants.js'
 import {
@@ -141,13 +141,21 @@ export async function triageRange(range: Range) {
 
   reportCommitStatuses({ commits, commitTriageData, range })
 
-  if (commitTriageData.size || prMilestoneCache.size) {
+  const changedFiles = unwrap(await $`git status --porcelain`)
+    .split('\n')
+    // Remove empty lines
+    .filter(Boolean)
+
+  if (changedFiles.length > 0) {
     writeMapToJson(commitTriageDataPath, commitTriageData)
     writeMapToJson(PR_MILESTONE_CACHE_PATH, prMilestoneCache)
 
-    cd(fileURLToPath(TRIAGE_DATA_PATH))
-    await $`git commit -am "triage ${new Date().toISOString()}"`
-    await $`git push`
+    await within(async () => {
+      $.cwd = fileURLToPath(TRIAGE_DATA_PATH)
+
+      await $`git commit -am "triage ${new Date().toISOString()}"`
+      await $`git push`
+    })
   }
 }
 
