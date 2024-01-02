@@ -297,18 +297,29 @@ export async function handleBranchesToCommits(
       "Trying to triage commits right now probably isn't going to be a good time.",
     ].join('\n')
   } else {
-    for (const [branch, status] of Object.entries(branchesToCommits)) {
-      const pullOrFetch = branch === 'main' ? 'pull' : 'fetch'
+    const branch = unwrap(await $`git branch --show-current`)
+    if (branch !== 'main') {
+      const prettyBranch = chalk.magenta(branch)
+      const prettyMain = chalk.magenta('main')
 
-      if (
-        status.commitsExclusiveToRemoteBranch &&
-        isYes(
-          await question(
-            `Ok to \`git ${pullOrFetch}\` ${chalk.magenta(branch)}? [Y/n] `
+      result.error =
+        `The redwood repo is currently on the ${prettyBranch} branch. It ` +
+        `needs to be on ${prettyMain} when releasing.`
+    } else {
+      for (const [branch, status] of Object.entries(branchesToCommits)) {
+        const pullOrFetch = branch === 'main' ? 'pull' : 'fetch'
+        const prettyBranch = chalk.magenta(branch)
+
+        if (
+          status.commitsExclusiveToRemoteBranch &&
+          isYes(
+            await question(
+              `Ok to \`git ${pullOrFetch}\` ${prettyBranch}? [Y/n] `
+            )
           )
-        )
-      ) {
-        await $`git ${pullOrFetch} ${redwoodRemote} ${branch}:${branch}`
+        ) {
+          await $`git ${pullOrFetch} ${redwoodRemote} ${branch}:${branch}`
+        }
       }
     }
   }
@@ -915,7 +926,6 @@ export async function switchToMainBranch() {
   const branch = unwrap(await $`git branch --show-current`)
 
   if (branch !== 'main') {
-    // TODO: Just warn and offer to switch if there are no current changes
     const prettyMain = chalk.magenta('main')
     const prettyBranch = branch
       ? chalk.magenta(branch)
@@ -924,7 +934,7 @@ export async function switchToMainBranch() {
     if (await isCleanBranch()) {
       console.log(
         `The redwood repo is currently on the ${prettyBranch} branch. It ` +
-          `needs to be on ${prettyMain} when triaging.`
+          `needs to be on ${prettyMain} when releasing and triaging.`
       )
 
       if (isYes(await question(`Ok to switch to ${prettyMain}? [Y/n] `))) {
