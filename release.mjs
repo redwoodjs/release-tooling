@@ -35,6 +35,8 @@ let redwoodRemote
 const compareURL = 'https://github.com/redwoodjs/redwood/compare'
 
 export async function main() {
+  $.cwd = '../redwood'
+
   const options = parseArgs()
 
   const { verbose } = options
@@ -491,7 +493,7 @@ async function cleanInstallUpdate() {
   const lernaVersion = nextRelease.replace('v', '')
   await $`yarn lerna version ${lernaVersion} --force-publish --no-push --no-git-tag-version --exact --yes`
 
-  const cwd = path.dirname(findUp('lerna.json'))
+  const cwd = '../redwood'
 
   spinner.text = 'Updating CRWA templates...'
 
