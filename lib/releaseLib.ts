@@ -21,7 +21,6 @@ export function setVerbosity(verbose: boolean) {
   $.verbose = verbose
 }
 
-// Set the verbosity of all the functions in this file.
 export function setCwd(cwd: string) {
   $.cwd = cwd
 }
