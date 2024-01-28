@@ -936,7 +936,7 @@ export async function switchToMainBranch() {
           `needs to be on ${prettyMain} when releasing and triaging.`
       )
 
-      if (isYes(await question(`Ok to switch to ${prettyMain}? [Y/n] `))) {
+      if (isYes(await question(`Ok to switch to ${prettyMain}? [Y/n] > `))) {
         return await $`git switch main`
       }
     } else {
