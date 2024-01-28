@@ -9,7 +9,7 @@ node_modules
 !.yarn/releases
 !.yarn/sdks
 !.yarn/versions
-.pnp.*
+!.yarn/cache
 
 # Release notes
 *_release_notes.md
