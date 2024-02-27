@@ -1,0 +1,15 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "configMigration": true,
+
+  "extends": [
+    "config:recommended",
+    ":disableRateLimiting"
+  ],
+  "automerge": true,
+  "postUpdateOptions": [
+    "yarnDedupeHighest"
+  ],
+  "rebaseWhen": "conflicted",
+  "rangeStrategy": "pin"
+}
