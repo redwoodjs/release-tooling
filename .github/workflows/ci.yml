@@ -43,4 +43,4 @@ jobs:
         run: cd release-tooling && yarn test ./triage
         env:
           REDWOOD_GITHUB_TOKEN: ${{ github.token }}
-          RWFW_PATH: ${{ join(env.GITHUB_WORKSPACE, 'redwood') }}
+          RWFW_PATH: ../redwood
