@@ -4,6 +4,7 @@ export interface ReleaseOptions {
   latestRelease: string
   nextRelease: string
   desiredSemver: ReleaseType
+  remote: string
 }
 
 export interface PR {

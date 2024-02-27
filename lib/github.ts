@@ -2,8 +2,6 @@ import { $ } from 'zx'
 
 import { CustomError } from './error.js'
 
-export const REMOTE = 'https://github.com/redwoodjs/redwood.git'
-
 /** Get the GitHub token from REDWOOD_GITHUB_TOKEN */
 export function getGitHubToken() {
   const gitHubToken = process.env.REDWOOD_GITHUB_TOKEN
@@ -40,13 +38,13 @@ export async function getUserLogin() {
   return data.viewer.login
 }
 
-export async function pullBranch(branch: string) {
+export async function pullBranch(branch: string, remote: string) {
   await $`git switch ${branch}`
-  await $`git pull ${REMOTE} ${branch}`
+  await $`git pull ${remote} ${branch}`
 }
 
-export async function pushBranch(branch: string) {
-  await $`git push ${REMOTE} ${branch}`
+export async function pushBranch(branch: string, remote: string) {
+  await $`git push ${remote} ${branch}`
 }
 
 /**
@@ -54,10 +52,10 @@ export async function pushBranch(branch: string) {
  *
  * See https://stackoverflow.com/questions/18268986/git-how-to-push-messages-added-by-git-notes-to-the-central-git-server.
  */
-export async function fetchNotes() {
-  await $`git fetch ${REMOTE} 'refs/notes/*:refs/notes/*'`
+export async function fetchNotes(remote: string) {
+  await $`git fetch ${remote} 'refs/notes/*:refs/notes/*'`
 }
 
-export async function pushNotes() {
-  await $`git push ${REMOTE} 'refs/notes/*'`
+export async function pushNotes(remote: string) {
+  await $`git push ${remote} 'refs/notes/*'`
 }

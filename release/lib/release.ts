@@ -3,7 +3,6 @@ import { cd, chalk, fs, path, question, $ } from 'zx'
 
 import { CustomError } from '@lib/error.js'
 import { branchExists } from '@lib/git.js'
-import { REMOTE } from '@lib/github.js'
 import { resIsYes } from '@lib/prompts.js'
 
 import { ReleaseOptions } from './types.js'
@@ -51,7 +50,7 @@ export async function release(options: ReleaseOptions) {
   await $`git commit -m "${options.nextRelease}"`
   // Tag and push.
   await $`git tag -am ${options.nextRelease} "${options.nextRelease}"`
-  await $`git push -u ${REMOTE} ${releaseBranch} --follow-tags`
+  await $`git push -u ${options.remote} ${releaseBranch} --follow-tags`
 
   // TODO(jtoar): Offer to merge the release branch into main/next.
 }

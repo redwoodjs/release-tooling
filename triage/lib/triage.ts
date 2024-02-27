@@ -11,7 +11,7 @@ import { getPrettyLine, getSymmetricDifference, resolveSymmetricDifference } fro
 import { colors, separator } from './tokens.js'
 import type { Commit, PrettyCommit, Range } from './types.js'
 
-export async function triageRange(range: Range) {
+export async function triageRange(range: Range, { remote }: { remote: string }) {
   const key = await cache.getKey(range)
   let commits = await cache.get(key)
 
@@ -35,6 +35,7 @@ export async function triageRange(range: Range) {
     console.log('✨ No commits to triage')
     return
   }
+
   reportCommitsEligibleForCherryPick(commitsEligibleForCherryPick, { range })
   console.log(separator)
   await cherryPickCommits(commitsEligibleForCherryPick.toReversed(), { range })
@@ -42,11 +43,11 @@ export async function triageRange(range: Range) {
   console.log(separator)
   const okToPushNotes = resIsYes(await question('Ok to push notes? [Y/n/o(pen)] > '))
   if (okToPushNotes) {
-    await pushNotes()
+    await pushNotes(remote)
   }
   const okToPushBranch = resIsYes(await question(`Ok to push ${range.to}? [Y/n/o(pen)] > `))
   if (okToPushBranch) {
-    await pushBranch(range.to)
+    await pushBranch(range.to, remote)
   }
 }
 

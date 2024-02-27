@@ -45,3 +45,16 @@ export async function assertBranchExists(branch: string) {
     ].join('\n'))
   }
 }
+
+export async function getRedwoodRemote() {
+  const remotes = unwrap(await $`git remote -v`)
+
+  for (const remote of remotes.split('\n')) {
+    const match = remote.match(/^(?<remote>.+)\s.+redwoodjs\/redwood/)
+    if (match?.groups) {
+      return match.groups.remote
+    }
+  }
+
+  throw new CustomError(`Couldn't find the remote for the Redwood monorepo.`)
+}
