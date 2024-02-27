@@ -9,7 +9,7 @@ import { assertNoNoMilestonePrs } from './lib/milestones.js'
 import { release } from './lib/release.js'
 
 try {
-  setCwd()
+  await setCwd()
   await assertWorkTreeIsClean()
   await assertNoNoMilestonePrs()
 

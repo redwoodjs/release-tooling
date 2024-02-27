@@ -8,7 +8,7 @@ import { getOptions } from './lib/options.js'
 import { triageRange } from "./lib/triage.js";
 
 try {
-  setCwd()
+  await setCwd()
   await assertWorkTreeIsClean()
 
   const options = await getOptions()

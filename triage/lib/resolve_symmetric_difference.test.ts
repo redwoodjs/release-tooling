@@ -9,8 +9,8 @@ $.verbose = false
 
 describe('resolveSymmetricDifference', () => {
   let resetCwd: () => void
-  beforeAll(() => {
-    resetCwd = setCwd()
+  beforeAll(async () => {
+    resetCwd = await setCwd()
   })
   afterAll(() => {
     resetCwd()

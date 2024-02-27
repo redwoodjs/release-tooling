@@ -9,7 +9,7 @@ import { REMOTE } from '@lib/github.js'
 import { resIsYes } from '@lib/prompts.js'
 
 if (resIsYes(await question('Ok to reset next to origin/next? [Y/n] > '))) {
-  setCwd()
+  await setCwd()
   await $`git switch next`
   await $`git fetch ${REMOTE}`
   await $`git reset --hard ${REMOTE}/next`

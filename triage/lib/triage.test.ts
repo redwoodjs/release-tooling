@@ -38,8 +38,8 @@ test('defaultGitLogOptions', () => {
 
 describe('getSymmetricDifference', () => {
   let resetCwd: () => void
-  beforeAll(() => {
-    resetCwd = setCwd()
+  beforeAll(async () => {
+    resetCwd = await setCwd()
   })
   afterAll(() => {
     resetCwd()
@@ -271,8 +271,8 @@ test('lineIsChore', () => {
 
 describe('resolveLine', async () => {
   let resetCwd: () => void
-  beforeAll(() => {
-    resetCwd = setCwd()
+  beforeAll(async () => {
+    resetCwd = await setCwd()
   })
   afterAll(() => {
     resetCwd()

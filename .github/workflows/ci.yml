@@ -16,6 +16,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          path: release-tooling
 
       - name: ⬢ Enable Corepack
         run: corepack enable
@@ -26,9 +28,19 @@ jobs:
           node-version: 20
 
       - name: 🐈 Yarn install
-        run: yarn install --inline-builds
+        run: cd release-tooling && yarn install --inline-builds
         env:
           GITHUB_TOKEN: ${{ github.token }}
 
+      - name: Checkout the Redwood monorepo
+        uses: actions/checkout@v4
+        with:
+          repository: redwoodjs/redwood
+          fetch-depth: 0
+          path: redwood
+
       - name: 🧪 Test
-        run: yarn test
+        run: cd release-tooling && yarn test ./triage
+        env:
+          REDWOOD_GITHUB_TOKEN: ${{ github.token }}
+          RWFW_PATH: ${{ join(env.GITHUB_WORKSPACE, 'redwood') }}
