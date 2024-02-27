@@ -1,6 +1,7 @@
+// Don't use this unless you know what you're doing!
+//
 // This script resets the next branch to the ${REMOTE}/next branch.
 // It's useful for testing the triage script, but it's destructive.
-// Don't use it unless you know what you're doing!
 
 import { question, $ } from 'zx'
 

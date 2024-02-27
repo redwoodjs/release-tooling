@@ -1,4 +1,5 @@
 export class CustomError extends Error {
+  name
   title
 
   constructor(message: string, title: string = '👷 Heads up') {

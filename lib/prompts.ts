@@ -14,7 +14,6 @@ export function prompts(
 
 export function resolveRes(res: string) {
   const isYes = resIsYes(res)
-
   if (isYes) {
     return 'yes'
   }

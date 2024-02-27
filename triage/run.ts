@@ -23,7 +23,7 @@ try {
   process.exitCode = 1;
 
   if (error instanceof CustomError) {
-    consoleBoxen("👷 Heads up", error.message);
+    consoleBoxen(error.title, error.message);
   } else {
     throw error;
   }

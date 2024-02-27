@@ -4,20 +4,12 @@ import { CustomError } from './error.js'
 
 export const REMOTE = 'https://github.com/redwoodjs/redwood.git'
 
-// See https://stackoverflow.com/questions/18268986/git-how-to-push-messages-added-by-git-notes-to-the-central-git-server.
-export async function fetchNotes() {
-  await $`git fetch ${REMOTE} 'refs/notes/*:refs/notes/*'`
-}
-export async function pushNotes() {
-  await $`git push ${REMOTE} 'refs/notes/*'`
-}
-
 /** Get the GitHub token from REDWOOD_GITHUB_TOKEN */
 export function getGitHubToken() {
   const gitHubToken = process.env.REDWOOD_GITHUB_TOKEN
 
   if (!gitHubToken) {
-    throw new CustomError("REDWOOD_GITHUB_TOKEN isn't set")
+    throw new CustomError("The `REDWOOD_GITHUB_TOKEN` environment variable isn't set")
   }
 
   return gitHubToken
@@ -55,4 +47,17 @@ export async function pullBranch(branch: string) {
 
 export async function pushBranch(branch: string) {
   await $`git push ${REMOTE} ${branch}`
+}
+
+/**
+ * Fetches notes from the remote.
+ *
+ * See https://stackoverflow.com/questions/18268986/git-how-to-push-messages-added-by-git-notes-to-the-central-git-server.
+ */
+export async function fetchNotes() {
+  await $`git fetch ${REMOTE} 'refs/notes/*:refs/notes/*'`
+}
+
+export async function pushNotes() {
+  await $`git push ${REMOTE} 'refs/notes/*'`
 }

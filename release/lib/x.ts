@@ -15,7 +15,7 @@ export async function getLatestReleaseOrThrow() {
     `The latest release is ${chalk.magenta(latestRelease)}? [Y/n] > `
   ))
   if (!ok) {
-    throw new CustomError('The latest release is not correct')
+    throw new CustomError("The latest release isn't correct")
   }
   return latestRelease
 }
@@ -28,7 +28,7 @@ export async function getNextReleaseOrThrow({ latestRelease, desiredSemver }: Pi
     )
   )
   if (!ok) {
-    throw new CustomError('The next release is not correct')
+    throw new CustomError("The next release isn't correct")
   }
   return nextRelease
 }
