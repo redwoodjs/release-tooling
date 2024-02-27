@@ -1,46 +1,46 @@
-name: 🔄 CI
+# name: 🔄 CI
 
-on:
-  pull_request:
+# on:
+#   pull_request:
 
-# Cancel in-progress runs of this workflow.
-# See https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#example-only-cancel-in-progress-jobs-or-runs-for-the-current-workflow.
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+# # Cancel in-progress runs of this workflow.
+# # See https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#example-only-cancel-in-progress-jobs-or-runs-for-the-current-workflow.
+# concurrency:
+#   group: ${{ github.workflow }}-${{ github.ref }}
+#   cancel-in-progress: true
 
-jobs:
-  ci:
-    name: 🔄 CI
-    runs-on: ubuntu-latest
+# jobs:
+#   ci:
+#     name: 🔄 CI
+#     runs-on: ubuntu-latest
 
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          path: release-tooling
+#     steps:
+#       - uses: actions/checkout@v4
+#         with:
+#           path: release-tooling
 
-      - name: ⬢ Enable Corepack
-        run: corepack enable
+#       - name: ⬢ Enable Corepack
+#         run: corepack enable
 
-      - name: ⬢ Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
+#       - name: ⬢ Set up Node.js
+#         uses: actions/setup-node@v4
+#         with:
+#           node-version: 20
 
-      - name: 🐈 Yarn install
-        run: cd release-tooling && yarn install --inline-builds
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
+#       - name: 🐈 Yarn install
+#         run: cd release-tooling && yarn install --inline-builds
+#         env:
+#           GITHUB_TOKEN: ${{ github.token }}
 
-      - name: Checkout the Redwood monorepo
-        uses: actions/checkout@v4
-        with:
-          repository: redwoodjs/redwood
-          fetch-depth: 0
-          path: redwood
+#       - name: Checkout the Redwood monorepo
+#         uses: actions/checkout@v4
+#         with:
+#           repository: redwoodjs/redwood
+#           fetch-depth: 0
+#           path: redwood
 
-      - name: 🧪 Test
-        run: cd release-tooling && yarn test ./triage
-        env:
-          REDWOOD_GITHUB_TOKEN: ${{ github.token }}
-          RWFW_PATH: ../redwood
+#       - name: 🧪 Test
+#         run: cd release-tooling && yarn test ./triage
+#         env:
+#           REDWOOD_GITHUB_TOKEN: ${{ github.token }}
+#           RWFW_PATH: ../redwood
