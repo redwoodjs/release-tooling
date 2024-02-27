@@ -28,7 +28,7 @@ const RAW_RUNTIME_STATE =
         "packageDependencies": [\
           ["@tsconfig/recommended", "npm:1.0.3"],\
           ["@types/prompts", "npm:2.4.9"],\
-          ["@types/semver", "npm:7.5.6"],\
+          ["@types/semver", "npm:7.5.8"],\
           ["boxen", "npm:7.1.1"],\
           ["execa", "npm:8.0.1"],\
           ["prompts", "npm:2.4.2"],\
@@ -570,10 +570,10 @@ const RAW_RUNTIME_STATE =
       }]\
     ]],\
     ["@types/semver", [\
-      ["npm:7.5.6", {\
-        "packageLocation": "./.yarn/cache/@types-semver-npm-7.5.6-9d2637fc95-196dc32db5.zip/node_modules/@types/semver/",\
+      ["npm:7.5.8", {\
+        "packageLocation": "./.yarn/cache/@types-semver-npm-7.5.8-26073743d7-8663ff9272.zip/node_modules/@types/semver/",\
         "packageDependencies": [\
-          ["@types/semver", "npm:7.5.6"]\
+          ["@types/semver", "npm:7.5.8"]\
         ],\
         "linkType": "HARD"\
       }]\
@@ -2149,7 +2149,7 @@ const RAW_RUNTIME_STATE =
           ["root-workspace-0b6124", "workspace:."],\
           ["@tsconfig/recommended", "npm:1.0.3"],\
           ["@types/prompts", "npm:2.4.9"],\
-          ["@types/semver", "npm:7.5.6"],\
+          ["@types/semver", "npm:7.5.8"],\
           ["boxen", "npm:7.1.1"],\
           ["execa", "npm:8.0.1"],\
           ["prompts", "npm:2.4.2"],\
