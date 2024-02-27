@@ -1,5 +1,5 @@
 import semver from 'semver'
-import { $ } from 'zx'
+import { chalk, $ } from 'zx'
 
 import { CustomError } from './error.js'
 import { unwrap } from './zx_helpers.js'
@@ -27,7 +27,7 @@ export async function assertWorkTreeIsClean() {
   const workTreeIsClean = unwrap(await $`git status -s`) === ''
   if (!workTreeIsClean) {
     throw new CustomError(
-      "Your working tree isn't clean. Commit or stash your changes."
+      `The working tree at ${chalk.magenta(process.cwd())} isn't clean. Commit or stash your changes.`
     );
   }
 }
@@ -38,6 +38,10 @@ export async function branchExists(branch: string) {
 
 export async function assertBranchExists(branch: string) {
   if (!(await branchExists(branch))) {
-    throw new CustomError(`The branch ${branch} doesn't exist. Check it out from the Redwood remote.`)
+    throw new CustomError([
+      `The ${chalk.magenta(branch)} branch doesn't exist locally. Check it out from the Redwood remote:`,
+      '',
+      chalk.green(`  git checkout -b ${branch} <your-redwood-remote>/${branch}`),
+    ].join('\n'))
   }
 }
