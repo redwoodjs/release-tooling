@@ -2,7 +2,7 @@ import { $ } from 'zx'
 
 import { CustomError } from './error.js'
 
-export const REMOTE = 'git@github.com:redwoodjs/redwood.git'
+export const REMOTE = 'https://github.com/redwoodjs/redwood.git'
 
 // See https://stackoverflow.com/questions/18268986/git-how-to-push-messages-added-by-git-notes-to-the-central-git-server.
 export async function fetchNotes() {
