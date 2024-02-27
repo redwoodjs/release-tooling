@@ -3,6 +3,9 @@
   "compilerOptions": {
     "strict": true,
     "module": "NodeNext",
-    "target": "ESNext"
+    "target": "ESNext",
+    "paths": {
+      "@lib/*": ["./lib/*"]
+    }
   }
 }

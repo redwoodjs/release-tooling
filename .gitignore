@@ -1,35 +1,15 @@
-*.icloud
-.cosine
-.idea
 .DS_Store
+
 node_modules
-dist
-lerna-debug.log
-yarn-error.log
-**/*.tsbuildinfo
-tasks/.verdaccio
-tasks/e2e/cypress/fixtures/example.json
-tmp/
-blog-test-project/*
+
+# Yarn
 .yarn/*
-**/.yarn/install-state.gz
 !.yarn/patches
-!.yarn/releases
 !.yarn/plugins
+!.yarn/releases
 !.yarn/sdks
 !.yarn/versions
-.pnp.*
-*.code-workspace
-.nova
+!.yarn/cache
 
-# For esbuild.
-**/meta.json
-**/meta.*.json
-
-.nx/cache
-
-# Release notes
-*_release_notes.md
-
-# Data files for QA.
-*.symmetricDifference.json
+# Triage
+triage/lib/cache
