@@ -1,5 +1,3 @@
-import { chalk } from 'zx'
-
 import { consoleBoxen, separator } from '@lib/console_helpers.js'
 import { setCwd } from '@lib/set_cwd.js'
 import { CustomError } from '@lib/custom_error.js'
