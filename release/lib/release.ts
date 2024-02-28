@@ -1,18 +1,74 @@
 import { execaCommand } from 'execa'
+import semver from 'semver'
 import { cd, chalk, fs, path, question, $ } from 'zx'
 
-import { CustomError } from '@lib/error.js'
-import { branchExists } from '@lib/git.js'
+import { separator } from '@lib/console_helpers.js'
+import { cherryPickCommits, reportCommitsEligibleForCherryPick } from '@lib/cherry_pick.js'
+import { CustomError } from '@lib/custom_error.js'
+import { branchExists, commitIsInRef, getCommitHash } from '@lib/git.js'
+import { pushBranch } from '@lib/github.js'
 import { resIsYes } from '@lib/prompts.js'
+import { unwrap } from "@lib/zx_helpers.js";
 
-import { ReleaseOptions } from './types.js'
+import { closeMilestone, getMilestone, getPrsWithMilestone, updatePrMilestone } from './milestones.js'
+import type { ReleaseOptions } from './types.js'
+
+export async function assertLoggedInToNpm() {
+  try {
+    await $`npm whoami`
+    console.log('🔑 Logged in to NPM')
+  } catch (error) {
+    throw new CustomError([
+      `You're Not logged in to NPM. Log in with ${chalk.magenta('npm login')}`,
+    ].join('\n'))
+  }
+}
+
+export async function getLatestReleaseOrThrow() {
+  const latestRelease = unwrap(
+    await $`git tag --sort="-version:refname" --list "v?.?.?" | head -n 1`
+  )
+  let ok = resIsYes(await question(
+    `The latest release is ${chalk.magenta(latestRelease)}? [Y/n] > `
+  ))
+  if (!ok) {
+    throw new CustomError("The latest release isn't correct")
+  }
+  return latestRelease
+}
+
+export async function getNextReleaseOrThrow({ latestRelease, desiredSemver }: Pick<ReleaseOptions, 'latestRelease' | 'desiredSemver'>) {
+  const nextRelease = `v${semver.inc(latestRelease, desiredSemver)}`
+  const ok = resIsYes(
+    await question(
+      `The next release is ${chalk.magenta(nextRelease)}? [Y/n] > `
+    )
+  )
+  if (!ok) {
+    throw new CustomError("The next release isn't correct")
+  }
+  return nextRelease
+}
+
+/**
+ * If the git tag for the desired semver already exists, this script was run before, but not to completion.
+ * The git tag is one of the last steps, so we need to delete it first.
+ */
+export async function assertGitTagDoesntExist({ nextRelease }: Pick<ReleaseOptions, | 'nextRelease'>) {
+  const gitTagAlreadyExists = unwrap(await $`git tag -l ${nextRelease}`)
+  if (gitTagAlreadyExists) {
+    throw new CustomError('The git tag already exists')
+  }
+}
 
 export async function release(options: ReleaseOptions) {
   const releaseBranch = ['release', options.desiredSemver, options.nextRelease].join('/')
   await switchToReleaseBranch({ ...options, releaseBranch })
 
-  // TODO(jtoar): There's more to a patch release that should go here.
+  console.log(separator)
+  await updateReleaseBranch({ ...options, releaseBranch })
 
+  console.log(separator)
   const message = options.desiredSemver === 'patch' ?
     `Ok to ${chalk.underline('reversion')} ${chalk.magenta(options.nextRelease)} docs? [Y/n] > ` :
     `Ok to ${chalk.underline('version')} docs to ${chalk.magenta(options.nextRelease)}? [Y/n] > `
@@ -20,16 +76,20 @@ export async function release(options: ReleaseOptions) {
   if (okToVersionDocs) {
     await versionDocs(options)
   }
+
+  console.log(separator)
   await question('Press anything to clean, install, and update package versions > ')
   await $`git clean -fxd`
   await $`yarn install`
   await updatePackageVersions(options)
 
+  console.log(separator)
   await question('Press anything to run build, lint, and test > ')
   await $`yarn build`
   await $`yarn lint`
   await $`yarn test`
 
+  console.log(separator)
   const ok = resIsYes(await question(`Ok to publish to NPM? [Y/n] > `))
   if (!ok) {
     throw new CustomError("See you later!", "👋")
@@ -40,10 +100,12 @@ export async function release(options: ReleaseOptions) {
 
   // Undo the temporary commit and publish CRWA.
   await undoRemoveCreateRedwoodAppFromWorkspaces()
+  console.log(separator)
   await question('Press anything to update create-redwood-app templates > ')
   await updateCreateRedwoodAppTemplates()
   await publish()
 
+  console.log(separator)
   await question('Press anything consolidate commits, tag, and push > ')
   // This combines the update package versions commit and update CRWA commit into one.
   await $`git reset --soft HEAD~2`
@@ -52,7 +114,11 @@ export async function release(options: ReleaseOptions) {
   await $`git tag -am ${options.nextRelease} "${options.nextRelease}"`
   await $`git push -u ${options.remote} ${releaseBranch} --follow-tags`
 
-  // TODO(jtoar): Offer to merge the release branch into main/next.
+  await closeMilestone(options.nextRelease)
+
+  console.log(separator)
+  await question('Press anything to merge the release branch into next >')
+  await mergeReleaseBranch(releaseBranch)
 }
 
 async function switchToReleaseBranch({ releaseBranch, latestRelease }: Pick<ReleaseOptions, 'latestRelease'> & { releaseBranch: string }) {
@@ -94,6 +160,53 @@ async function switchToReleaseBranch({ releaseBranch, latestRelease }: Pick<Rele
   }
 }
 
+async function updateReleaseBranch(options: ReleaseOptions & { releaseBranch: string }) {
+  const prs = await getPrsWithMilestone('next-release-patch')
+  if (options.desiredSemver === 'patch' && prs.length === 0) {
+    throw new CustomError("You're release a patch but there are no PRs with the next-release-patch milestone", "🤔 Hmmm...")
+  }
+
+  if (options.desiredSemver === 'minor') {
+    const nextReleasePrs = await getPrsWithMilestone('next-release')
+    if (nextReleasePrs.length === 0) {
+      throw new CustomError("You're releasing a minor but there are no PRs with the next-release milestone", "🤔 Hmmm...")
+    }
+    prs.push(...nextReleasePrs)
+  }
+
+  let shouldCherryPick = false 
+
+  for (const pr of prs) {
+    pr.line = pr.mergeCommit.messageHeadline
+
+    if (!await commitIsInRef(options.releaseBranch, pr.line)) {
+      shouldCherryPick = true
+
+      const line = unwrap(await $`git log next --oneline --no-abbrev-commit --grep ${pr.line}`)
+      pr.hash = await getCommitHash(line)
+    }
+  }
+
+  if (!shouldCherryPick) {
+    console.log('✨ No commits to triage')
+    return
+  }
+
+  reportCommitsEligibleForCherryPick(prs)
+  const milestone = await getMilestone(options.nextRelease)
+  await cherryPickCommits(prs, {
+    range: { from: 'next', to: options.releaseBranch },
+    afterCherryPick: async (pr) => {
+      await updatePrMilestone(pr.id, milestone.id)
+    }
+  })
+  console.log(separator)
+  const okToPushBranch = resIsYes(await question(`Ok to push ${options.releaseBranch}? [Y/n] > `))
+  if (okToPushBranch) {
+    await pushBranch(options.releaseBranch, options.remote)
+  }
+}
+
 async function versionDocs({ desiredSemver, nextRelease }: Pick<ReleaseOptions, 'desiredSemver' | 'nextRelease'>) {
   const nextDocsVersion = nextRelease.slice(1, -2)
   await cd('./docs')
@@ -109,7 +222,15 @@ async function versionDocs({ desiredSemver, nextRelease }: Pick<ReleaseOptions, 
   await $`yarn clear`
   await $`yarn docusaurus docs:version ${nextDocsVersion}`
   await $`git add .`
-  await $`git commit -m "Version docs to ${nextDocsVersion}"`
+  try {
+    await $`git commit -m "Version docs to ${nextDocsVersion}"`
+  } catch (error) {
+    if (error.stdout.includes('nothing to commit, working tree clean')) {
+      console.log('✨ No docs to version')
+    } else {
+      throw error
+    }
+  }
   await cd('../')
 }
 
@@ -119,7 +240,19 @@ async function updatePackageVersions({ nextRelease }: Pick<ReleaseOptions, 'next
   // See docs on these options at https://github.com/lerna/lerna/tree/main/libs/commands/version#options.
   await $`yarn lerna version ${lernaVersion} --no-git-tag-version --no-push --force-publish --exact --yes`
 
-  for (const templatePath of ['packages/create-redwood-app/templates/ts', 'packages/create-redwood-app/templates/js', '__fixtures__/test-project']) {
+  // As far as I can tell, `lerna version` doesn't update peer dependencies,
+  // so we need to do that manually. See https://github.com/lerna/lerna/issues/1575.
+  await updateRedwoodJsDependencyVersions('packages/api-server/package.json', lernaVersion)
+  await $`yarn install`
+  await $`yarn dedupe`
+  await $`git add .`
+  await $`git commit --amend --no-edit`
+
+  for (const templatePath of [
+    'packages/create-redwood-app/templates/ts',
+    'packages/create-redwood-app/templates/js',
+    '__fixtures__/test-project'
+  ]) {
     await updateRedwoodJsDependencyVersions(path.join(templatePath, 'package.json'), lernaVersion)
     await updateRedwoodJsDependencyVersions(path.join(templatePath, 'api', 'package.json'), lernaVersion)
     await updateRedwoodJsDependencyVersions(path.join(templatePath, 'web', 'package.json'), lernaVersion)
@@ -194,4 +327,9 @@ async function updateCreateRedwoodAppTemplates() {
   await $`git add .`
   await $`git commit -m "chore: update create-redwood-app templates"`
   cd(originalCwd)
+}
+
+async function mergeReleaseBranch(releaseBranch: string) {
+  await $`git switch next`
+  await $`git merge ${releaseBranch}`
 }

@@ -2,11 +2,12 @@ import { fileURLToPath } from 'node:url'
 
 import { fs, $ } from "zx";
 
+import { commitRegExps, commitIsInRef, getCommitHash } from '@lib/git.js'
 import { gqlGitHub } from '@lib/github.js'
+import type { Commit, Range } from "@lib/types.js";
 import { unwrap } from "@lib/zx_helpers.js";
 
-import { colors } from './tokens.js'
-import type { Commit, Range } from "./types.js";
+import { colors } from './colors.js'
 
 export const defaultGitLogOptions = [
   "--oneline",
@@ -89,26 +90,6 @@ export async function resolveLine(line: string, { range }: { range: Range }) {
   return commit
 }
 
-const commitRegExps = {
-  hash: /\s(?<hash>\w{40})\s/,
-  pr: /\(#(?<pr>\d+)\)$/,
-  annotatedTag: /^v\d.\d.\d$/,
-}
-
-/** Get a commit's hash */
-export function getCommitHash(line: string) {
-  const match = line.match(commitRegExps.hash)
-
-  if (!match?.groups) {
-    throw new Error([
-      `Couldn't find a commit hash in the line "${line}"`,
-      "This most likely means that a line that's UI isn't being identified as such",
-    ].join('\n'))
-  }
-
-  return match.groups.hash
-}
-
 /** Get a commit's message from its 40-character hash */
 export async function getCommitMessage(hash: string) {
   return unwrap(await $`git log --format=%s -n 1 ${hash}`)
@@ -161,16 +142,6 @@ export async function getCommitMilestone(prUrl: string) {
   const milestone = data.resource.milestone.title
   cache.set(prUrl, milestone)
   return milestone
-}
-
-/** Square brackets (`[` or `]`) in commit messages need to be escaped */
-function sanitizeMessage(message: string) {
-  return message.replace('[', '\\[').replace(']', '\\]')
-}
-
-export async function commitIsInRef(ref: string, message: string) {
-  message = sanitizeMessage(message)
-  return unwrap(await $`git log ${ref} --oneline --grep ${message}`)
 }
 
 const MARKS = ["o", "/", "|\\", "| o", "|\\|", "|/"];

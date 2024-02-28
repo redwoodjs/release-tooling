@@ -1,6 +1,6 @@
 import { cd, chalk, fs } from "zx"
 
-import { CustomError } from './error.js'
+import { CustomError } from './custom_error.js'
 
 export async function setCwd() {
   let RWFW_PATH = process.env.RWFW_PATH;
@@ -30,5 +30,6 @@ export async function setCwd() {
 
   const originalCwd = process.cwd()
   cd(RWFW_PATH)
+  console.log(`📂 Working in ${chalk.magenta(RWFW_PATH)}`)
   return () => cd(originalCwd)
 }

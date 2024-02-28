@@ -2,7 +2,7 @@ import { fs, $ } from 'zx'
 
 import { beforeAll, afterAll, describe, expect, it } from 'vitest'
 
-import { setCwd } from '../../lib/cwd.js'
+import { setCwd } from '../../lib/set_cwd.js'
 import { resolveSymmetricDifference } from './symmetric_difference.js'
 
 $.verbose = false

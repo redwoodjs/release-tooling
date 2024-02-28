@@ -2,10 +2,11 @@ import { chalk, $ } from 'zx'
 
 import { beforeAll, afterAll, describe, expect, it, test } from 'vitest'
 
-import { setCwd } from '../../lib/cwd.js'
+import { getCommitHash } from '@lib/git.js'
+
+import { setCwd } from '../../lib/set_cwd.js'
 import {
   defaultGitLogOptions,
-  getCommitHash,
   getCommitMessage,
   getCommitMilestone,
   getCommitPr,
@@ -17,7 +18,7 @@ import {
   PADDING,
   resolveLine,
 } from './symmetric_difference.js'
-import { colors } from './tokens.js'
+import { colors } from './colors.js'
 import { commitIsEligibleForCherryPick } from './triage.js'
 
 $.verbose = false
@@ -223,6 +224,12 @@ describe('getCommitHash', () => {
       [Error: Couldn't find a commit hash in the line "|\\"
       This most likely means that a line that's UI isn't being identified as such]
     `)
+  })
+
+  it('works for non left-right lines', () => {
+    const hash = getCommitHash("487548234b49bb93bb79ad89c7ac4a91ed6c0dc9 chore(deps): update dependency @playwright/test to v1.41.2 (#10040)")
+    expect(hash).toEqual('487548234b49bb93bb79ad89c7ac4a91ed6c0dc9')
+
   })
 })
 

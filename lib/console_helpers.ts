@@ -1,4 +1,5 @@
 import boxen from 'boxen'
+import { chalk } from 'zx'
 
 export function consoleBoxen(title: string, message: string) {
   console.error(
@@ -15,3 +16,5 @@ export function consoleBoxen(title: string, message: string) {
     })
   )
 }
+
+export const separator = chalk.dim('-'.repeat(process.stdout.columns))

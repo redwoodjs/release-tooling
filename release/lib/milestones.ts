@@ -1,11 +1,7 @@
-import { $ } from 'zx'
+import { CustomError } from '@lib/custom_error.js'
+import { getGitHubFetchHeaders, gqlGitHub } from '@lib/github.js'
 
-import { CustomError } from '@lib/error.js'
-import { gqlGitHub } from '@lib/github.js'
-import { debugLogger } from '@lib/debug_logger.js'
-// import { unwrap } from '@lib/zx_helpers.js'
-
-import { PR } from './types.js'
+import type { PR } from './types.js'
 
 export async function getPrsWithMilestone(milestone?: string): Promise<PR[]> {
   const search = [
@@ -18,11 +14,15 @@ export async function getPrsWithMilestone(milestone?: string): Promise<PR[]> {
   } else {
     search.push(`milestone:${milestone}`)
   }
-  debugLogger(search.join(' '))
 
   const res = await gqlGitHub({ query: prsQuery, variables: { search: search.join(' ') } })
-  debugLogger(res)
-  return res.data.search.nodes
+  const prs = res.data.search.nodes
+
+  prs.sort((a, b) => {
+    return new Date(a.mergedAt) > new Date(b.mergedAt) ? 1 : -1
+  })
+
+  return prs
 }
 
 const prsQuery = `\
@@ -41,11 +41,18 @@ const prsQuery = `\
           mergeCommit {
             messageHeadline
           }
+          mergedAt
         }
       }
     }
   }
 `
+
+const milestonesToIds = {
+  'chore': 'MDk6TWlsZXN0b25lNjc4MjU1MA==',
+  'next-release': 'MI_kwDOC2M2f84Aa82f',
+  'next-release-patch': 'MDk6TWlsZXN0b25lNjc1Nzk0MQ==',
+}
 
 export async function assertNoNoMilestonePrs() {
   const noMilestonePrs = await getPrsWithMilestone()
@@ -58,35 +65,77 @@ export async function assertNoNoMilestonePrs() {
   }
 }
 
-// export async function getPrs({ desiredSemver }: ReleaseOptions) {
-//   // Handle PRs that have been merged without a milestone. We have a check in CI for this, so it really shouldn't happen.
-//   // But if it does, we handle it here.
-//   let prs = await getPrsWithMilestone('next-release-patch')
+export async function updatePrMilestone(prId: string, milestoneId: string) {
+  return gqlGitHub({
+    query: updatePrMilestoneMutation,
+    variables: {
+      prId,
+      milestoneId: milestoneId,
+    },
+  })
+}
 
-//   if (desiredSemver === 'minor') {
-//     const nextReleasePrs = await getPrsWithMilestone('next-release')
-//     prs = [
-//       ...prs,
-//       ...nextReleasePrs
-//     ]
-//   }
+const updatePrMilestoneMutation = `\
+  mutation ($prId: ID!, $milestoneId: ID) {
+    updatePullRequest(input: { pullRequestId: $prId, milestoneId: $milestoneId }) {
+      clientMutationId
+    }
+  }
+`
 
-//   prs.map(async (pr) => {
-//     return {
-//       ...pr,
-//       hash: await getHashForPr(pr)
-//     }
-//   })
+export async function createMilestone(title: string) {
+  const headers = await getGitHubFetchHeaders()
+  const res = await fetch(`https://api.github.com/repos/redwoodjs/redwood/milestones`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({ title }),
+  })
+  const json = await res.json()
+  return {
+    id: json.node_id,
+    title: json.title,
+    number: json.number,
+  }
+}
 
-//   return prs
-// }
+export async function closeMilestone(title: string) {
+  const milestone = await getMilestone(title)
+  const headers = await getGitHubFetchHeaders()
+  const res = await fetch(`https://api.github.com/repos/redwoodjs/redwood/milestones/${milestone.number}`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({ state: 'closed' }),
+  })
+  const json = await res.json()
+  console.log(json)
+}
 
-// /** Square brackets (`[` or `]`) in commit messages need to be escaped */
-// function sanitizeMessage(message: string) {
-//   return message.replace('[', '\\[').replace(']', '\\]')
-// }
+async function getMilestones() {
+  const res = await gqlGitHub({ query: getMilestonesQuery })
+  return res.data.repository.milestones.nodes
+}
 
-// async function getHashForPr(message: string) {
-//   message = sanitizeMessage(message)
-//   const res = unwrap(await $`git log next --oneline --grep ${message}`)
-// }
+const getMilestonesQuery = `\
+  {
+    repository(owner: "redwoodjs", name: "redwood") {
+      milestones(first: 100, states: OPEN) {
+        nodes {
+          id
+          title
+          number
+        }
+      }
+    }
+  }
+`
+
+export async function getMilestone(title: string) {
+  const milestones = await getMilestones()
+  let milestone = milestones.find((milestone) => milestone.title === title)
+  if (milestone) {
+    return milestone
+  } 
+
+  milestone = await createMilestone(title)
+  return milestone
+}

@@ -3,6 +3,7 @@ import { prompts } from '@lib/prompts.js'
 
 export async function getOptions() {
   const releaseBranches = await getReleaseBranches();
+  console.log()
 
   const choices = [
     "main...next",

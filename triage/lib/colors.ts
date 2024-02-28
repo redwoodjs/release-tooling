@@ -5,5 +5,3 @@ export const colors = {
   shouldntBeCherryPicked: chalk.dim.red,
   choreOrDecorative: chalk.dim,
 }
-
-export const separator = chalk.dim('-'.repeat(process.stdout.columns))

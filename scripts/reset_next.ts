@@ -5,7 +5,7 @@
 
 import { question, $ } from 'zx'
 
-import { setCwd } from '@lib/cwd.js'
+import { setCwd } from '@lib/set_cwd.js'
 import { getRedwoodRemote } from '@lib/git.js'
 import { resIsYes } from '@lib/prompts.js'
 
