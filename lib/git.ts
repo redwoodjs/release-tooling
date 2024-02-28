@@ -27,7 +27,7 @@ export async function assertWorkTreeIsClean() {
   const workTreeIsClean = unwrap(await $`git status -s`) === ''
   if (!workTreeIsClean) {
     throw new CustomError(
-      `The working tree at ${chalk.magenta(process.cwd())} isn't clean. Commit or stash your changes.`
+      `The working tree at ${chalk.magenta(process.cwd())} isn't clean. Commit or stash your changes`
     );
   }
   console.log('✨ The working tree is clean')
@@ -59,7 +59,7 @@ export async function getRedwoodRemote() {
     }
   }
 
-  throw new CustomError(`Couldn't find the remote for the Redwood monorepo.`)
+  throw new CustomError(`Couldn't find the remote for the Redwood monorepo`)
 }
 
 export const commitRegExps = {

@@ -3,10 +3,10 @@
   "license": "MIT",
   "type": "module",
   "scripts": {
-    "release": "tsx --env-file=.env ./release/run.ts",
+    "release": "tsx ./release/run.ts",
     "reset-next": "tsx ./scripts/resetNext.ts",
     "test": "vitest run",
-    "triage": "tsx --env-file=.env ./triage/run.ts"
+    "triage": "tsx ./triage/run.ts"
   },
   "devDependencies": {
     "@tsconfig/recommended": "1.0.3",

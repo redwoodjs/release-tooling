@@ -11,9 +11,7 @@ export async function setCwd() {
       '',
       `  ${chalk.green("export RWFW_PATH='/path/to/redwoodjs/redwood'")}`,
       '',
-      "You can set it in...",
-      `  • one of your shell start-up files (e.g. ${chalk.magenta('~/.bashrc')} or ${chalk.magenta('~/.zshrc')})`,
-      `  • a ${chalk.magenta('.env')} file in this directory`,
+      `in one of your shell start-up files (e.g. ${chalk.magenta('~/.bashrc')} or ${chalk.magenta('~/.zshrc')})`,
     ].join('\n'));
   }
   try {
@@ -24,7 +22,7 @@ export async function setCwd() {
       '',
       `  ${chalk.magenta(RWFW_PATH)}`,
       '',
-      "but there's nothing at that path."
+      "but there's nothing at that path"
     ].join('\n'))
   }
 

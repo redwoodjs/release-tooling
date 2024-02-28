@@ -4,7 +4,7 @@ Release tooling for Redwood. See the [package.json](./package.json) scripts for 
 
 ## Quick Start
 
-- In either your shell start-up file (e.g. `~/.zshrc` or `~/.bashrc`) or a `.env` file in this directory that you create, add the following environment variable:
+- In your shell start-up file (e.g. `~/.zshrc` or `~/.bashrc`), add the following environment variable:
 
   ```bash
   export RWFW_PATH='/path/to/redwoodjs/redwood'
