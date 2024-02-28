@@ -1,17 +1,24 @@
+import { assertWorkTreeIsClean } from '@lib/branches.js'
 import { consoleBoxen, separator } from '@lib/console_helpers.js'
-import { setCwd } from '@lib/set_cwd.js'
 import { CustomError } from '@lib/custom_error.js'
-import { assertWorkTreeIsClean, getRedwoodRemote } from '@lib/git.js'
+import { assertRwfwPathAndSetCwd } from '@lib/cwd.js'
+import { getRedwoodRemote } from '@lib/get_redwood_remote.js'
+import { assertNoNoMilestonePrs } from '@lib/milestones.js'
 import { getDesiredSemver } from '@lib/prompts.js'
 
-import { assertNoNoMilestonePrs } from './lib/milestones.js'
-import { assertLoggedInToNpm, assertGitTagDoesntExist, getLatestReleaseOrThrow, getNextReleaseOrThrow, release } from './lib/release.js'
+import {
+  assertLoggedInToNpm,
+  assertGitTagDoesntExist,
+  getLatestReleaseOrThrow,
+  getNextReleaseOrThrow,
+  release
+} from './lib/release.js'
 
 try {
   await assertLoggedInToNpm()
 
   console.log(separator)
-  await setCwd()
+  await assertRwfwPathAndSetCwd()
 
   console.log(separator)
   await assertWorkTreeIsClean()

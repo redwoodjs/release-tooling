@@ -1,10 +1,12 @@
 import type { ProcessOutput } from 'zx'
 
 /**
- * Helper for getting the trimmed stdout from `zx`'s `ProcessOutput`:
+ * Helper for getting the trimmed stdout from `zx`'s `ProcessOutput`
+ * 
+ * @example
  *
  * ```ts
- * unwrap(await $`...`)
+ * const stdout = unwrap(await $`...`)
  * ```
  */
 export function unwrap(processOutput: ProcessOutput) {

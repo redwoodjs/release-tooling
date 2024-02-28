@@ -2,7 +2,8 @@ import { fs, $ } from 'zx'
 
 import { beforeAll, afterAll, describe, expect, it } from 'vitest'
 
-import { setCwd } from '../../lib/set_cwd.js'
+import { assertRwfwPathAndSetCwd } from '@lib/cwd.js'
+
 import { resolveSymmetricDifference } from './symmetric_difference.js'
 
 $.verbose = false
@@ -10,7 +11,7 @@ $.verbose = false
 describe('resolveSymmetricDifference', () => {
   let resetCwd: () => void
   beforeAll(async () => {
-    resetCwd = await setCwd()
+    resetCwd = await assertRwfwPathAndSetCwd()
   })
   afterAll(() => {
     resetCwd()

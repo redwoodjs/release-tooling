@@ -1,15 +1,20 @@
-import { fileURLToPath } from 'node:url'
+import { $ } from "zx";
 
-import { fs, $ } from "zx";
-
-import { commitRegExps, commitIsInRef, getCommitHash } from '@lib/git.js'
-import { gqlGitHub } from '@lib/github.js'
+import {
+  commitIsInRef,
+  commitRegExps,
+  getCommitHash,
+  getCommitMessage,
+  getCommitNotes,
+  getCommitPr
+} from '@lib/commits.js'
+import { getPrMilestone } from '@lib/milestones.js'
 import type { Commit, Range } from "@lib/types.js";
 import { unwrap } from "@lib/zx_helpers.js";
 
 import { colors } from './colors.js'
 
-export const defaultGitLogOptions = [
+export const gitLogOptions = [
   "--oneline",
   "--no-abbrev-commit",
   "--left-right",
@@ -19,17 +24,10 @@ export const defaultGitLogOptions = [
   "--boundary",
 ];
 
-interface GetSymmetricDifferenceOptions {
-  gitLogOptions?: string[];
-}
-
 /* Get the symmetric difference between two refs. (Basically, what's different about them.) */
 export async function getSymmetricDifference(
   range: Range,
-  { gitLogOptions }: GetSymmetricDifferenceOptions = {},
 ) {
-  gitLogOptions ??= defaultGitLogOptions;
-
   return unwrap(
     await $`git log ${gitLogOptions} ${range.from}...${range.to}`,
   ).split("\n")
@@ -84,64 +82,10 @@ export async function resolveLine(line: string, { range }: { range: Range }) {
     return commit
   }
   commit.url = `https://github.com/redwoodjs/redwood/pull/${commit.pr}`
-  commit.milestone = await getCommitMilestone(commit.url)
+  commit.milestone = await getPrMilestone(commit.url)
   commit.line = [commit.line.padEnd(PADDING), `(${commit.milestone})`].join(' ')
 
   return commit
-}
-
-/** Get a commit's message from its 40-character hash */
-export async function getCommitMessage(hash: string) {
-  return unwrap(await $`git log --format=%s -n 1 ${hash}`)
-}
-
-/** Get a commit's PR (if it has one) */
-export function getCommitPr(message: string) {
-  return message.match(commitRegExps.pr)?.groups?.pr
-}
-
-let cache: Map<string, string>
-
-async function setUpCache() {
-  const cacheFilePath = fileURLToPath(new URL('commit_milestone_cache.json', import.meta.url))
-
-  if (!await fs.pathExists(cacheFilePath)) {
-    return new Map<string, string>()
-  }
-
-  const commitMilestoneCache = await fs.readJson(cacheFilePath)
-  return new Map<string, string>(Object.entries(commitMilestoneCache))
-
-  process.on('exit', () => {
-    fs.writeJsonSync(cacheFilePath, Object.fromEntries(cache))
-  })
-}
-
-const query = `\
-  query GetCommitMilestone($prUrl: URI!) {
-    resource(url: $prUrl) {
-      ...on PullRequest {
-        milestone {
-          title
-        }
-      }
-    }
-  }
-`
-
-/** Get a commit that has a PR's milestone */
-export async function getCommitMilestone(prUrl: string) {
-  if (!cache) {
-    cache = await setUpCache()
-  }
-  if (cache.has(prUrl)) {
-    return cache.get(prUrl)
-  }
-  const { data } = await gqlGitHub({ query, variables: { prUrl } })
-
-  const milestone = data.resource.milestone.title
-  cache.set(prUrl, milestone)
-  return milestone
 }
 
 const MARKS = ["o", "/", "|\\", "| o", "|\\|", "|/"];
@@ -193,13 +137,4 @@ export function getPrettyLine(commit: Commit, { range }: { range: Range }) {
   }
 
   return commit.line
-}
-
-async function getCommitNotes(hash: string) {
-  try {
-    const notes = unwrap(await $`git notes show ${hash}`)
-    return notes
-  } catch (error) {
-    return undefined
-  }
 }

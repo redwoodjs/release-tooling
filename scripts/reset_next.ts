@@ -5,12 +5,12 @@
 
 import { question, $ } from 'zx'
 
-import { setCwd } from '@lib/set_cwd.js'
-import { getRedwoodRemote } from '@lib/git.js'
+import { assertRwfwPathAndSetCwd } from '@lib/cwd.js'
+import { getRedwoodRemote } from '@lib/get_redwood_remote.js'
 import { resIsYes } from '@lib/prompts.js'
 
 if (resIsYes(await question('Ok to reset next to origin/next? [Y/n] > '))) {
-  await setCwd()
+  await assertRwfwPathAndSetCwd()
   await $`git switch next`
   const remote = await getRedwoodRemote()
   await $`git fetch ${remote}`

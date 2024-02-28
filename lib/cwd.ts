@@ -2,7 +2,11 @@ import { cd, chalk, fs } from "zx"
 
 import { CustomError } from './custom_error.js'
 
-export async function setCwd() {
+/**
+ * Set the current working directory to the Redwood monorepo via the `RWFW_PATH` environment variable.
+ * Returns a function that resets the current working directory.
+ */
+export async function assertRwfwPathAndSetCwd() {
   let RWFW_PATH = process.env.RWFW_PATH;
 
   if (!RWFW_PATH) {
@@ -12,6 +16,7 @@ export async function setCwd() {
       `  ${chalk.green("export RWFW_PATH='/path/to/redwoodjs/redwood'")}`,
       '',
       `in one of your shell start-up files (e.g. ${chalk.magenta('~/.bashrc')} or ${chalk.magenta('~/.zshrc')})`,
+      'or in a .env file in this directory that you create',
     ].join('\n'));
   }
   try {

@@ -18,3 +18,13 @@ export type Commit = {
 }
 
 export type PrettyCommit = Commit & { pretty?: string }
+
+export interface PR {
+  id: string
+  number: number
+  title: string
+  url: string
+  mergeCommit: {
+    messageHeadline: string
+  }
+}

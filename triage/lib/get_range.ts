@@ -1,7 +1,7 @@
-import { getReleaseBranches } from "@lib/git.js";
+import { getReleaseBranches } from "@lib/branches.js";
 import { prompts } from '@lib/prompts.js'
 
-export async function getOptions() {
+export async function getRange() {
   const releaseBranches = await getReleaseBranches();
   console.log()
 
@@ -25,9 +25,7 @@ export async function getOptions() {
   const [from, to] = rangeRes.range.split("...");
 
   return {
-    range: {
-      from,
-      to,
-    },
+    from,
+    to,
   };
 }

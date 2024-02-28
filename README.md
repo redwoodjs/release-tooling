@@ -1,20 +1,50 @@
 # Release tooling
 
-Release tooling for Redwood. See the [package.json](./package.json) scripts for the available commands.
+This repository contains release tooling for the [Redwood monorepo](https://github.com/redwoodjs/redwood).
 
 ## Quick Start
 
-- In your shell start-up file (e.g. `~/.zshrc` or `~/.bashrc`), add the following environment variable:
+- In your shell start-up file (e.g. `~/.zshrc` or `~/.bashrc`) or a `.env` file (that you create) in this directory, add the following environment variable:
 
   ```bash
-  export RWFW_PATH='/path/to/redwoodjs/redwood'
+  touch .env
+
+  echo "export RWFW_PATH='/path/to/redwoodjs/redwood'" >> .env
+  echo "export REDWOOD_GITHUB_TOKEN='...'" >> .env
   ```
 
-  Where `RWFW_PATH` is the path to your local copy of the Redwood monorepo.
+  Where `RWFW_PATH` is the path to your local copy of the Redwood monorepo and `REDWOOD_GITHUB_TOKEN` is a personal access token with the `public_repo` scope.
 
-- Make sure that you've checked out the `main` and `next` branches from the Redwood monorepo's remote and have the latest changes on your machine.
+- Check out the `main` and `next` branches from the Redwood monorepo's remote.
 
-## Notes
+  ```bash
+  cd $RWFW_PATH
 
-- This project uses Yarn's [Zero-installs](https://yarnpkg.com/features/caching#zero-installs)
-- The code for release is incomplete. Use the release script in the Redwood monorepo for the time being.
+  git fetch <your-redwood-remote>
+  git switch main
+  git switch next
+  ```
+
+- Run `yarn install` in this directory. It should fly by! This project uses Yarn's [Zero-installs](https://yarnpkg.com/features/caching#zero-installs).
+
+## Commands
+
+### Triage
+
+Redwood has a dual-branch strategy.
+Most of the work involves moving commits from main to next and then from next to a release branch.
+The triage command guides you through this process:
+
+```
+yarn triage
+```
+
+### Release
+
+When it's time to release, the release command walks you through the process:
+
+```
+yarn release
+```
+
+Ensure you have access to the RedwoodJS organization on NPM first.

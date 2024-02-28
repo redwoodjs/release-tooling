@@ -2,15 +2,15 @@ import { execaCommand } from 'execa'
 import semver from 'semver'
 import { cd, chalk, fs, path, question, $ } from 'zx'
 
+import { branchExists, pushBranch  } from '@lib/branches.js'
+import { cherryPickCommits, reportCommitsEligibleForCherryPick } from '@lib/cherry_pick_commits.js'
+import { commitIsInRef, getCommitHash } from '@lib/commits.js'
 import { separator } from '@lib/console_helpers.js'
-import { cherryPickCommits, reportCommitsEligibleForCherryPick } from '@lib/cherry_pick.js'
 import { CustomError } from '@lib/custom_error.js'
-import { branchExists, commitIsInRef, getCommitHash } from '@lib/git.js'
-import { pushBranch } from '@lib/github.js'
+import { closeMilestone, createMilestone, getMilestone, getPrsWithMilestone, updatePrMilestone } from '@lib/milestones.js'
 import { resIsYes } from '@lib/prompts.js'
 import { unwrap } from "@lib/zx_helpers.js";
 
-import { closeMilestone, getMilestone, getPrsWithMilestone, updatePrMilestone } from './milestones.js'
 import type { ReleaseOptions } from './types.js'
 
 export async function assertLoggedInToNpm() {
@@ -74,7 +74,7 @@ export async function release(options: ReleaseOptions) {
     `Ok to ${chalk.underline('version')} docs to ${chalk.magenta(options.nextRelease)}? [Y/n] > `
   const okToVersionDocs = resIsYes(await question(message))
   if (okToVersionDocs) {
-    await versionDocs(options)
+    await versionDocs(options.nextRelease)
   }
 
   console.log(separator)
@@ -97,28 +97,31 @@ export async function release(options: ReleaseOptions) {
   // Temporarily remove `packages/create-redwood-app` from the workspaces field so that we can publish it separately later.
   const undoRemoveCreateRedwoodAppFromWorkspaces = await removeCreateRedwoodAppFromWorkspaces()
   await publish()
-
   // Undo the temporary commit and publish CRWA.
-  await undoRemoveCreateRedwoodAppFromWorkspaces()
   console.log(separator)
+  await undoRemoveCreateRedwoodAppFromWorkspaces()
   await question('Press anything to update create-redwood-app templates > ')
   await updateCreateRedwoodAppTemplates()
   await publish()
 
   console.log(separator)
-  await question('Press anything consolidate commits, tag, and push > ')
+  await question('Press anything consolidate commits and tag > ')
   // This combines the update package versions commit and update CRWA commit into one.
   await $`git reset --soft HEAD~2`
   await $`git commit -m "${options.nextRelease}"`
-  // Tag and push.
   await $`git tag -am ${options.nextRelease} "${options.nextRelease}"`
+
+  console.log(separator)
+  await question('Press anything to push the tag to GitHub > ')
   await $`git push -u ${options.remote} ${releaseBranch} --follow-tags`
 
+  console.log(separator)
+  await question(`Press anything to close the ${options.nextRelease} milestone > `)
   await closeMilestone(options.nextRelease)
 
   console.log(separator)
-  await question('Press anything to merge the release branch into next >')
-  await mergeReleaseBranch(releaseBranch)
+  await question('Press anything to merge the release branch into next > ')
+  await mergeReleaseBranch({ ...options, releaseBranch })
 }
 
 async function switchToReleaseBranch({ releaseBranch, latestRelease }: Pick<ReleaseOptions, 'latestRelease'> & { releaseBranch: string }) {
@@ -193,7 +196,14 @@ async function updateReleaseBranch(options: ReleaseOptions & { releaseBranch: st
   }
 
   reportCommitsEligibleForCherryPick(prs)
-  const milestone = await getMilestone(options.nextRelease)
+
+  let milestone
+  try {
+    milestone = await getMilestone(options.nextRelease)
+  } catch (_error) {
+    milestone = await createMilestone(options.nextRelease)
+  }
+
   await cherryPickCommits(prs, {
     range: { from: 'next', to: options.releaseBranch },
     afterCherryPick: async (pr) => {
@@ -201,13 +211,14 @@ async function updateReleaseBranch(options: ReleaseOptions & { releaseBranch: st
     }
   })
   console.log(separator)
-  const okToPushBranch = resIsYes(await question(`Ok to push ${options.releaseBranch}? [Y/n] > `))
+  const okToPushBranch = resIsYes(await question(`Ok to push ${chalk.magenta(options.releaseBranch)} to ${chalk.magenta(options.remote)}? [Y/n] > `))
   if (okToPushBranch) {
     await pushBranch(options.releaseBranch, options.remote)
+    await $`open https://github.com/redwoodjs/redwood/compare/${options.latestRelease}...${options.releaseBranch}`
   }
 }
 
-async function versionDocs({ desiredSemver, nextRelease }: Pick<ReleaseOptions, 'desiredSemver' | 'nextRelease'>) {
+async function versionDocs(nextRelease: string) {
   const nextDocsVersion = nextRelease.slice(1, -2)
   await cd('./docs')
 
@@ -246,7 +257,7 @@ async function updatePackageVersions({ nextRelease }: Pick<ReleaseOptions, 'next
   await $`yarn install`
   await $`yarn dedupe`
   await $`git add .`
-  await $`git commit --amend --no-edit`
+  await $`git commit -m "chore: update package versions to ${nextRelease}"`
 
   for (const templatePath of [
     'packages/create-redwood-app/templates/ts',
@@ -303,10 +314,12 @@ async function removeCreateRedwoodAppFromWorkspaces() {
 
 async function publish() {
   try {
+    // We're using execa here and not zx because zx doesn't handle the prompt for the otp.
     await execaCommand('yarn lerna publish from-package', { stdio: 'inherit' })
   } catch {
+    console.log(separator)
     await question([
-      '✋ Publishing failed. You can usually recover from this by...',
+      "✋ Publishing failed. But don't worry! You can usually recover from this by...",
       '',
       "1. Getting rid of the changes to the package.json's (lerna will make them again)",
       "2. In another terminal, running `yarn lerna publish from-package`",
@@ -329,7 +342,29 @@ async function updateCreateRedwoodAppTemplates() {
   cd(originalCwd)
 }
 
-async function mergeReleaseBranch(releaseBranch: string) {
+export async function mergeReleaseBranch(options: ReleaseOptions & { releaseBranch: string }) {
   await $`git switch next`
-  await $`git merge ${releaseBranch}`
+
+  try {
+    await $`git merge ${options.releaseBranch}`
+  } catch (_error) {
+    console.log()
+    console.log(chalk.yellow("✋ Couldn't cleanly merge the release branch into next. Resolve the conflicts and run `git merge --continue`"))
+    console.log()
+    await question('Press anything to continue > ')
+  }
+
+  console.log(separator)
+  const okToPushBranch = resIsYes(await question(`Ok to push ${chalk.magenta('next')} to ${chalk.magenta(options.remote)}? [Y/n] > `))
+  if (okToPushBranch) {
+    await pushBranch('next', options.remote)
+  }
+
+  console.log(separator)
+  const okToDeleteBranches = resIsYes(await question(`Ok to delete ${chalk.magenta(options.releaseBranch)}? [Y/n] > `))
+  if (okToDeleteBranches) {
+    await $`git switch main`
+    await $`git branch -d ${options.releaseBranch}`
+    await $`git push ${options.remote} --delete ${options.releaseBranch}`
+  }
 }

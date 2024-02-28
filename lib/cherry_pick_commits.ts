@@ -44,9 +44,10 @@ export async function cherryPickCommits(commits: Commit[], {
         console.log(chalk.green('🌸 Successfully cherry picked'))
         await afterCherryPick?.(commit)
         break
-      } catch (error) {
+      } catch (_error) {
         console.log()
         console.log(chalk.yellow("✋ Couldn't cleanly cherry pick. Resolve the conflicts and run `git cherry-pick --continue`"))
+        console.log()
         await question('Press anything to continue > ')
         await afterCherryPick?.(commit)
         break

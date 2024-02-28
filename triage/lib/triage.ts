@@ -2,15 +2,16 @@ import { fileURLToPath } from 'node:url'
 
 import { chalk, fs, path, question, $ } from 'zx'
 
+import { pushBranch } from '@lib/branches.js'
 import { consoleBoxen, separator } from '@lib/console_helpers.js'
-import { cherryPickCommits, reportCommitsEligibleForCherryPick } from '@lib/cherry_pick.js'
-import { pushBranch, pushNotes } from '@lib/github.js'
+import { cherryPickCommits, reportCommitsEligibleForCherryPick } from '@lib/cherry_pick_commits.js'
+import { pushNotes } from '@lib/notes.js'
 import { resIsYes } from '@lib/prompts.js'
 import type { Commit, PrettyCommit, Range } from '@lib/types.js'
 import { unwrap } from '@lib/zx_helpers.js'
 
-import { getPrettyLine, getSymmetricDifference, resolveSymmetricDifference } from './symmetric_difference.js'
 import { colors } from './colors.js'
+import { getPrettyLine, getSymmetricDifference, resolveSymmetricDifference } from './symmetric_difference.js'
 
 export async function triageRange(range: Range, { remote }: { remote: string }) {
   const key = await cache.getKey(range)
@@ -42,11 +43,11 @@ export async function triageRange(range: Range, { remote }: { remote: string }) 
   await cherryPickCommits(commitsEligibleForCherryPick.toReversed(), { range })
 
   console.log(separator)
-  const okToPushNotes = resIsYes(await question('Ok to push notes? [Y/n] > '))
+  const okToPushNotes = resIsYes(await question(`Ok to push notes to ${chalk.magenta('origin')}? [Y/n] > `))
   if (okToPushNotes) {
     await pushNotes(remote)
   }
-  const okToPushBranch = resIsYes(await question(`Ok to push ${range.to}? [Y/n] > `))
+  const okToPushBranch = resIsYes(await question(`Ok to push ${chalk.magenta(range.to)} to ${chalk.magenta('origin')}? [Y/n] > `))
   if (okToPushBranch) {
     await pushBranch(range.to, remote)
   }

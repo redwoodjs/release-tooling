@@ -1,15 +1,20 @@
-import { consoleBoxen, separator } from '@lib/console_helpers.js'
-import { setCwd } from '@lib/set_cwd.js'
-import { CustomError } from '@lib/custom_error.js'
-import { assertBranchExists, assertWorkTreeIsClean, getRedwoodRemote } from '@lib/git.js'
-import { fetchNotes, pullBranch } from '@lib/github.js'
+import 'dotenv/config'
 
-import { getOptions } from './lib/options.js'
+import { assertBranchExistsAndTracksRemote, assertWorkTreeIsClean, pullBranch } from '@lib/branches.js'
+import { assertGitHubToken } from '@lib/assert_github_token.js'
+import { consoleBoxen, separator } from '@lib/console_helpers.js'
+import { CustomError } from '@lib/custom_error.js'
+import { assertRwfwPathAndSetCwd } from '@lib/cwd.js'
+import { getRedwoodRemote } from '@lib/get_redwood_remote.js'
+import { fetchNotes } from '@lib/notes.js'
+
+import { getRange } from './lib/get_range.js'
 import { triageRange } from "./lib/triage.js";
 
 try {
-  await setCwd()
+  assertGitHubToken()
 
+  await assertRwfwPathAndSetCwd()
   console.log(separator)
   await assertWorkTreeIsClean()
 
@@ -17,19 +22,19 @@ try {
   const remote = await getRedwoodRemote()
 
   console.log(separator)
-  const options = await getOptions()
+  const range = await getRange()
 
   console.log(separator)
-  await assertBranchExists(options.range.from)
-  await assertBranchExists(options.range.to)
+  await assertBranchExistsAndTracksRemote(range.from, remote)
+  await assertBranchExistsAndTracksRemote(range.to, remote)
 
   console.log(separator)
-  await pullBranch(options.range.from, remote)
-  await pullBranch(options.range.to, remote)
+  await pullBranch(range.from, remote)
+  await pullBranch(range.to, remote)
   await fetchNotes(remote)
 
   console.log(separator)
-  await triageRange(options.range, { remote });
+  await triageRange(range, { remote });
 } catch (error) {
   process.exitCode = 1;
 

@@ -6,13 +6,15 @@
     "release": "tsx ./release/run.ts",
     "reset-next": "tsx ./scripts/resetNext.ts",
     "test": "vitest run",
-    "triage": "tsx ./triage/run.ts"
+    "triage": "tsx ./triage/run.ts",
+    "update-pr-milestone-cache": "tsx ./scripts/update_pr_milestone_cache.ts"
   },
   "devDependencies": {
     "@tsconfig/recommended": "1.0.3",
     "@types/prompts": "2.4.9",
     "@types/semver": "7.5.8",
     "boxen": "7.1.1",
+    "dotenv": "16.4.5",
     "execa": "8.0.1",
     "prompts": "2.4.2",
     "semver": "7.6.0",

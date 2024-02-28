@@ -30,6 +30,7 @@ const RAW_RUNTIME_STATE =
           ["@types/prompts", "npm:2.4.9"],\
           ["@types/semver", "npm:7.5.8"],\
           ["boxen", "npm:7.1.1"],\
+          ["dotenv", "npm:16.4.5"],\
           ["execa", "npm:8.0.1"],\
           ["prompts", "npm:2.4.2"],\
           ["semver", "npm:7.6.0"],\
@@ -988,6 +989,15 @@ const RAW_RUNTIME_STATE =
         "packageDependencies": [\
           ["dir-glob", "npm:3.0.1"],\
           ["path-type", "npm:4.0.0"]\
+        ],\
+        "linkType": "HARD"\
+      }]\
+    ]],\
+    ["dotenv", [\
+      ["npm:16.4.5", {\
+        "packageLocation": "./.yarn/cache/dotenv-npm-16.4.5-bcb20eb95d-48d9287007.zip/node_modules/dotenv/",\
+        "packageDependencies": [\
+          ["dotenv", "npm:16.4.5"]\
         ],\
         "linkType": "HARD"\
       }]\
@@ -2151,6 +2161,7 @@ const RAW_RUNTIME_STATE =
           ["@types/prompts", "npm:2.4.9"],\
           ["@types/semver", "npm:7.5.8"],\
           ["boxen", "npm:7.1.1"],\
+          ["dotenv", "npm:16.4.5"],\
           ["execa", "npm:8.0.1"],\
           ["prompts", "npm:2.4.2"],\
           ["semver", "npm:7.6.0"],\

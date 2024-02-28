@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# Small script for testing triage/run.ts.
+# Small script for testing ./triage/run.ts.
 # Comment in the desired test case and run the script.
 
 # # - Worktree isn't clean

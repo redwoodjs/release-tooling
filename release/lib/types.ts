@@ -6,13 +6,3 @@ export interface ReleaseOptions {
   desiredSemver: ReleaseType
   remote: string
 }
-
-export interface PR {
-  id: string
-  number: number
-  title: string
-  url: string
-  mergeCommit: {
-    messageHeadline: string
-  }
-}
