@@ -17,8 +17,6 @@ export async function triageRange(range: Range, { remote }: { remote: string }) 
   const key = await cache.getKey(range);
   let commits = await cache.get(key);
 
-  console.log(separator);
-
   if (!commits) {
     const symmetricDifference = await getSymmetricDifference(range);
     commits = await resolveSymmetricDifference(symmetricDifference, { range });
@@ -29,8 +27,11 @@ export async function triageRange(range: Range, { remote }: { remote: string }) 
       };
     });
     await cache.set(key, commits);
+  } else {
+    console.log("💾 Using caching at ./triage/lib/cache");
   }
 
+  console.log(separator);
   reportCommits(commits, { range });
   const commitsEligibleForCherryPick = commits.filter((commit) => commitIsEligibleForCherryPick(commit, { range }));
   console.log(separator);

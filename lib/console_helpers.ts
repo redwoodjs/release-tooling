@@ -18,3 +18,9 @@ export function consoleBoxen(title: string, message: string) {
 }
 
 export const separator = chalk.dim("-".repeat(process.stdout.columns));
+
+export function logSection(title: string) {
+  console.log(separator);
+  console.log(chalk.dim(title));
+  console.log();
+}

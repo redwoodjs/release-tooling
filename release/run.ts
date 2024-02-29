@@ -1,5 +1,5 @@
 import { assertWorkTreeIsClean } from "@lib/branches.js";
-import { consoleBoxen, separator } from "@lib/console_helpers.js";
+import { consoleBoxen, logSection } from "@lib/console_helpers.js";
 import { CustomError } from "@lib/custom_error.js";
 import { assertRwfwPathAndSetCwd } from "@lib/cwd.js";
 import { getRedwoodRemote } from "@lib/get_redwood_remote.js";
@@ -18,25 +18,25 @@ import {
 try {
   setUpLogs(new URL("../release_log.json", import.meta.url));
 
+  logSection("Making sure you're logged in to npm")
   await assertLoggedInToNpm();
 
-  console.log(separator);
+  logSection("Getting the path to the Redwood monorepo via RWFW_PATH and cd-ing there");
   await assertRwfwPathAndSetCwd();
 
-  console.log(separator);
+  logSection("Asserting that the work tree is clean in the Redwood monorepo");
   await assertWorkTreeIsClean();
   await assertNoNoMilestonePrs();
 
-  console.log(separator);
+  logSection("Getting the name of the GitHub remote for the Redwood monorepo");
   const remote = await getRedwoodRemote();
 
-  console.log(separator);
+  logSection("Getting the desired semver for the next release");
   const desiredSemver = await getDesiredSemver();
   const latestRelease = await getLatestReleaseOrThrow();
   const nextRelease = await getNextReleaseOrThrow({ latestRelease, desiredSemver });
   await assertGitTagDoesntExist({ nextRelease });
 
-  console.log(separator);
   await release({ latestRelease, nextRelease, desiredSemver, remote });
 } catch (error) {
   process.exitCode = 1;

@@ -2,7 +2,7 @@ import "dotenv/config";
 
 import { assertGitHubToken } from "@lib/assert_github_token.js";
 import { assertBranchExistsAndTracksRemote, assertWorkTreeIsClean, pullBranch } from "@lib/branches.js";
-import { consoleBoxen, separator } from "@lib/console_helpers.js";
+import { consoleBoxen, logSection } from "@lib/console_helpers.js";
 import { CustomError } from "@lib/custom_error.js";
 import { assertRwfwPathAndSetCwd } from "@lib/cwd.js";
 import { getRedwoodRemote } from "@lib/get_redwood_remote.js";
@@ -17,26 +17,29 @@ try {
 
   assertGitHubToken();
 
+  logSection("Getting the path to the Redwood monorepo via RWFW_PATH and cd-ing there");
   await assertRwfwPathAndSetCwd();
-  console.log(separator);
+  logSection("Asserting that the work tree is clean in the Redwood monorepo");
   await assertWorkTreeIsClean();
 
-  console.log(separator);
+  logSection("Getting the name of the GitHub remote for the Redwood monorepo");
   const remote = await getRedwoodRemote();
 
-  console.log(separator);
+  logSection("Getting release branches and the range to triage");
   const range = await getRange();
 
-  console.log(separator);
+  logSection(`Making sure the ${range.from} and ${range.to} branches exist locally and track the remote (${remote})`);
   await assertBranchExistsAndTracksRemote(range.from, remote);
   await assertBranchExistsAndTracksRemote(range.to, remote);
 
-  console.log(separator);
+  logSection(
+    `Pulling down the latest ${range.from} and ${range.to} branches from the remote (${remote}) and fetching git notes`,
+  );
   await pullBranch(range.from, remote);
   await pullBranch(range.to, remote);
   await fetchNotes(remote);
 
-  console.log(separator);
+  logSection(`Resolving the symmetric difference between ${range.from} and ${range.to} (${range.from}...${range.to})`);
   await triageRange(range, { remote });
 } catch (error) {
   process.exitCode = 1;

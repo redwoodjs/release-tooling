@@ -5,7 +5,7 @@ import { $, cd, chalk, fs, path, question } from "zx";
 import { branchExists, pushBranch } from "@lib/branches.js";
 import { cherryPickCommits, reportCommitsEligibleForCherryPick } from "@lib/cherry_pick_commits.js";
 import { commitIsInRef, getCommitHash } from "@lib/commits.js";
-import { separator } from "@lib/console_helpers.js";
+import { logSection, separator } from "@lib/console_helpers.js";
 import { CustomError } from "@lib/custom_error.js";
 import { logs } from "@lib/logs.js";
 import {
@@ -74,13 +74,14 @@ export async function assertGitTagDoesntExist({ nextRelease }: Pick<ReleaseOptio
 }
 
 export async function release(options: ReleaseOptions) {
+  logSection("Switching to the release branch");
   const releaseBranch = ["release", options.desiredSemver, options.nextRelease].join("/");
   await switchToReleaseBranch({ ...options, releaseBranch });
 
-  console.log(separator);
+  logSection("Seeing if the release branch needs updated based on milestones");
   await updateReleaseBranch({ ...options, releaseBranch });
 
-  console.log(separator);
+  logSection("Versioning or re-versioning the docs if necessary");
   const message = options.desiredSemver === "patch"
     ? `Ok to ${chalk.underline("reversion")} ${chalk.magenta(options.nextRelease)} docs? [Y/n] > `
     : `Ok to ${chalk.underline("version")} docs to ${chalk.magenta(options.nextRelease)}? [Y/n] > `;
@@ -89,19 +90,19 @@ export async function release(options: ReleaseOptions) {
     await versionDocs(options.nextRelease);
   }
 
-  console.log(separator);
+  logSection("Cleaning, installing, and updating package versions");
   await question("Press anything to clean, install, and update package versions > ");
   await $`git clean -fxd`;
   await $`yarn install`;
   await updatePackageVersions(options);
 
-  console.log(separator);
+  logSection("Build, lint, test");
   await question("Press anything to run build, lint, and test > ");
   await $`yarn build`;
   await $`yarn lint`;
   await $`yarn test`;
 
-  console.log(separator);
+  logSection("Publishing to NPM");
   const ok = resIsYes(await question(`Ok to publish to NPM? [Y/n] > `));
   if (!ok) {
     throw new CustomError("See you later!", "👋");
@@ -110,30 +111,30 @@ export async function release(options: ReleaseOptions) {
   const undoRemoveCreateRedwoodAppFromWorkspaces = await removeCreateRedwoodAppFromWorkspaces();
   await publish();
   // Undo the temporary commit and publish CRWA.
-  console.log(separator);
+  logSection("Updating create-redwood-app templates and publishing to NPM");
   await undoRemoveCreateRedwoodAppFromWorkspaces();
   await question("Press anything to update create-redwood-app templates > ");
   await updateCreateRedwoodAppTemplates();
   await publish();
 
-  console.log(separator);
+  logSection("Consolidating commits and tagging the release");
   await question("Press anything consolidate commits and tag > ");
   // This combines the update package versions commit and update CRWA commit into one.
   await $`git reset --soft HEAD~2`;
   await $`git commit -m "${options.nextRelease}"`;
   await $`git tag -am ${options.nextRelease} "${options.nextRelease}"`;
 
-  console.log(separator);
+  logSection("Pushing the release branch");
   await question(
     `Press anything to push the ${chalk.magenta(options.nextRelease)} tag to ${chalk.magenta(options.remote)} > `,
   );
   await $`git push -u ${options.remote} ${releaseBranch} --follow-tags`;
 
-  console.log(separator);
+  logSection("Closing the milestone, and merging the release branch into next");
   await question(`Press anything to close the ${chalk.magenta(options.nextRelease)} milestone > `);
   await closeMilestone(options.nextRelease);
 
-  console.log(separator);
+  logSection("Merging the release branch into next");
   await question(`Press anything to merge ${chalk.magenta(releaseBranch)} into ${chalk.magenta("next")} > `);
   await mergeReleaseBranch({ ...options, releaseBranch });
 }
