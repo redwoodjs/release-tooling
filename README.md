@@ -2,6 +2,8 @@
 
 This repository contains release tooling for the [Redwood monorepo](https://github.com/redwoodjs/redwood).
 
+![release](https://github.com/redwoodjs/release-tooling/assets/32992335/6f6e6dbb-c259-49b0-a8dc-f77a654be39f)
+
 ## Quick Start
 
 - In your shell start-up file (e.g. `~/.zshrc` or `~/.bashrc`) or a `.env` file (that you create) in this directory, add the following environment variable:
@@ -32,8 +34,8 @@ This repository contains release tooling for the [Redwood monorepo](https://gith
 ### Triage
 
 Redwood has a dual-branch strategy.
-Most of the work involves moving commits from main to next and then from next to a release branch.
-The triage command guides you through this process:
+Most of the work involves moving commits from the main branch to the next branch.
+The `yarn triage` command guides you through this process:
 
 ```
 yarn triage
@@ -41,10 +43,8 @@ yarn triage
 
 ### Release
 
-When it's time to release, the release command walks you through the process:
+When it's time to release, run the `yarn release` command:
 
 ```
 yarn release
 ```
-
-Ensure you have access to the RedwoodJS organization on NPM first.
