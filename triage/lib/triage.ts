@@ -5,8 +5,8 @@ import { chalk, fs, path, question, $ } from 'zx'
 import { pushBranch } from '@lib/branches.js'
 import { consoleBoxen, separator } from '@lib/console_helpers.js'
 import { cherryPickCommits, reportCommitsEligibleForCherryPick } from '@lib/cherry_pick_commits.js'
-import { pushNotes } from '@lib/notes.js'
 import { resIsYes } from '@lib/prompts.js'
+import { pushNotes } from '@lib/notes.js'
 import type { Commit, PrettyCommit, Range } from '@lib/types.js'
 import { unwrap } from '@lib/zx_helpers.js'
 
@@ -16,6 +16,8 @@ import { getPrettyLine, getSymmetricDifference, resolveSymmetricDifference } fro
 export async function triageRange(range: Range, { remote }: { remote: string }) {
   const key = await cache.getKey(range)
   let commits = await cache.get(key)
+
+  console.log(separator)
 
   if (!commits) {
     const symmetricDifference = await getSymmetricDifference(range)
@@ -29,7 +31,6 @@ export async function triageRange(range: Range, { remote }: { remote: string }) 
     await cache.set(key, commits)
   }
 
-  console.log(separator)
   reportCommits(commits, { range })
   const commitsEligibleForCherryPick = commits.filter((commit) => commitIsEligibleForCherryPick(commit, { range }))
   console.log(separator)

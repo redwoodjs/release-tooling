@@ -6,12 +6,15 @@ import { consoleBoxen, separator } from '@lib/console_helpers.js'
 import { CustomError } from '@lib/custom_error.js'
 import { assertRwfwPathAndSetCwd } from '@lib/cwd.js'
 import { getRedwoodRemote } from '@lib/get_redwood_remote.js'
+import { setUpLogs } from '@lib/logs.js'
 import { fetchNotes } from '@lib/notes.js'
 
 import { getRange } from './lib/get_range.js'
 import { triageRange } from "./lib/triage.js";
 
 try {
+  setUpLogs(new URL('../triage_log.json', import.meta.url))
+
   assertGitHubToken()
 
   await assertRwfwPathAndSetCwd()

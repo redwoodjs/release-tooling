@@ -1,4 +1,4 @@
-import { $ } from "zx";
+import { spinner, $ } from "zx";
 
 import {
   commitIsInRef,
@@ -8,6 +8,7 @@ import {
   getCommitNotes,
   getCommitPr
 } from '@lib/commits.js'
+import { logs } from '@lib/logs.js'
 import { getPrMilestone } from '@lib/milestones.js'
 import type { Commit, Range } from "@lib/types.js";
 import { unwrap } from "@lib/zx_helpers.js";
@@ -28,9 +29,12 @@ export const gitLogOptions = [
 export async function getSymmetricDifference(
   range: Range,
 ) {
-  return unwrap(
+  $.verbose = false
+  const symmetricDifference = unwrap(
     await $`git log ${gitLogOptions} ${range.from}...${range.to}`,
   ).split("\n")
+  $.verbose = true
+  return symmetricDifference
 }
 
 /** Resolves the return of `getSymmetricDifference` */
@@ -38,10 +42,9 @@ export async function resolveSymmetricDifference(
   lines: string[],
   { range }: { range: Range },
 ) {
-  const commits = await Promise.all(
-    lines.map((line) => resolveLine(line, { range }))
-  )
-  return commits
+  return spinner("Resolving symmetric difference", () => {
+    return Promise.all(lines.map((line) => resolveLine(line, { range })))
+  })
 }
 
 export const PADDING = 130
@@ -55,6 +58,7 @@ export async function resolveLine(line: string, { range }: { range: Range }) {
 
   if (lineIsGitLogUi(commit.line)) {
     commit.type = "ui";
+    logs.push(commit)
     return commit
   }
 
@@ -64,11 +68,13 @@ export async function resolveLine(line: string, { range }: { range: Range }) {
   if (lineIsAnnotatedTag(commit.message)) {
     commit.type = 'tag'
     commit.ref = commit.message
+    logs.push(commit)
     return commit
   }
 
   if (lineIsChore(line)) {
     commit.type = 'chore'
+    logs.push(commit)
     return commit
   }
 
@@ -79,12 +85,14 @@ export async function resolveLine(line: string, { range }: { range: Range }) {
 
   commit.pr = getCommitPr(commit.message)
   if (!commit.pr) {
+    logs.push(commit)
     return commit
   }
   commit.url = `https://github.com/redwoodjs/redwood/pull/${commit.pr}`
   commit.milestone = await getPrMilestone(commit.url)
   commit.line = [commit.line.padEnd(PADDING), `(${commit.milestone})`].join(' ')
 
+  logs.push(commit)
   return commit
 }
 
@@ -124,7 +132,7 @@ export function getPrettyLine(commit: Commit, { range }: { range: Range }) {
     commit.type === 'ui' ||
     commit.type === 'tag' ||
     commit.type === 'chore'
-    ) {
+  ) {
     return colors.choreOrDecorative(commit.line)
   }
 
@@ -138,3 +146,4 @@ export function getPrettyLine(commit: Commit, { range }: { range: Range }) {
 
   return commit.line
 }
+
