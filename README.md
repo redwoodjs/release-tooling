@@ -17,7 +17,7 @@ This repository contains release tooling for the [Redwood monorepo](https://gith
 
   Where `RWFW_PATH` is the path to your local copy of the Redwood monorepo and `REDWOOD_GITHUB_TOKEN` is a personal access token with the `public_repo` scope.
 
-- Check out the `main` and `next` branches from the Redwood monorepo's remote.
+- Check out the `main` and `next` branches from the Redwood monorepo's remote:
 
   ```bash
   cd $RWFW_PATH
@@ -27,7 +27,7 @@ This repository contains release tooling for the [Redwood monorepo](https://gith
   git switch next
   ```
 
-- Run `yarn install` in this directory. It should fly by! This project uses Yarn's [Zero-installs](https://yarnpkg.com/features/caching#zero-installs).
+- Run `yarn install` in this directory. It should fly by! This project uses Yarn's [zero-installs](https://yarnpkg.com/features/caching#zero-installs)
 
 ## Commands
 
@@ -58,12 +58,12 @@ yarn lint
 yarn fmt
 ```
 
-`yarn lint` uses [ESLint](https://eslint.org/) and `yarn fmt` uses [dprint](https://dprint.dev/). I couldn't get ESLint to play nicely with Yarn's zero-installs, so you'll have to rely on those two CLI commands for the time being.
+`yarn lint` uses [ESLint](https://eslint.org/) and `yarn fmt` uses [dprint](https://dprint.dev/). I couldn't get the ESLint VS Code extension to play nicely with Yarn's zero-installs, so you won't be able to just save the file and have everything linted and formatted. Use those two CLI commands for the time being.
 
 Running tests requires a bit more setup than I'd like, but here's what you need to do...
 
-- ensure you have the Redwood monorepo locally.
-- checkout the `release-tooling/main-test` and `release-tooling/next-test` branches
+- Ensure you have the Redwood monorepo locally
+- In the Redwood monorepo checkout the `release-tooling/main-test` and `release-tooling/next-test` branches:
 
   ```
   cd $RWFW_PATH
@@ -71,8 +71,9 @@ Running tests requires a bit more setup than I'd like, but here's what you need 
   git switch release-tooling/next-test
   ```
 
-Then you should be able to run the tests:
+Then navigate back to this repo and you should be able to run the tests:
 
 ```
+cd /path/to/redwoodjs/release-tooling
 yarn test
 ```

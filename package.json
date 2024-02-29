@@ -3,13 +3,15 @@
   "license": "MIT",
   "type": "module",
   "scripts": {
+    "clean": "git clean -fxd -e .env",
+    "check": "yarn clean && yarn install && yarn lint && yarn fmt && yarn test",
     "lint": "eslint .",
     "fmt": "dprint fmt",
-    "release": "tsx ./release/run.ts",
-    "reset-next": "tsx ./scripts/resetNext.ts",
     "test": "vitest run",
+    "release": "tsx ./release/run.ts",
     "triage": "tsx ./triage/run.ts",
-    "update-pr-milestone-cache": "tsx ./scripts/update_pr_milestone_cache.ts"
+    "update-pr-milestone-cache": "tsx ./scripts/update_pr_milestone_cache.ts",
+    "reset-next": "tsx ./scripts/resetNext.ts"
   },
   "devDependencies": {
     "@eslint/js": "8.57.0",
