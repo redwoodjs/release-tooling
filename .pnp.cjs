@@ -823,7 +823,7 @@ const RAW_RUNTIME_STATE =
           ["debug", "virtual:1ff4b5f90832ba0a9c93ba1223af226e44ba70c1126a3740d93562b97bc36544e896a5e95908196f7458713e6a6089a34bfc67362fc6df7fa093bd06c878be47#npm:4.3.4"],\
           ["eslint", "npm:8.57.0"],\
           ["graphemer", "npm:1.4.0"],\
-          ["ignore", "npm:5.3.0"],\
+          ["ignore", "npm:5.3.1"],\
           ["natural-compare", "npm:1.4.0"],\
           ["semver", "npm:7.6.0"],\
           ["ts-api-utils", "virtual:765f3d7526fb3ed08b1e8cc4c091d8c5de56199800f27a3118230d5658ec58d4780c60ecbfefe9b7bb42545f2aa3c9b0615739181963b48f874eb2781782fc84#npm:1.2.1"],\
@@ -2137,7 +2137,7 @@ const RAW_RUNTIME_STATE =
           ["globby", "npm:13.2.2"],\
           ["dir-glob", "npm:3.0.1"],\
           ["fast-glob", "npm:3.3.2"],\
-          ["ignore", "npm:5.3.0"],\
+          ["ignore", "npm:5.3.1"],\
           ["merge2", "npm:1.4.1"],\
           ["slash", "npm:4.0.0"]\
         ],\
@@ -2231,13 +2231,6 @@ const RAW_RUNTIME_STATE =
       }]\
     ]],\
     ["ignore", [\
-      ["npm:5.3.0", {\
-        "packageLocation": "./.yarn/cache/ignore-npm-5.3.0-fb0f5fa062-dc06bea5c2.zip/node_modules/ignore/",\
-        "packageDependencies": [\
-          ["ignore", "npm:5.3.0"]\
-        ],\
-        "linkType": "HARD"\
-      }],\
       ["npm:5.3.1", {\
         "packageLocation": "./.yarn/cache/ignore-npm-5.3.1-f6947c5df7-703f7f45ff.zip/node_modules/ignore/",\
         "packageDependencies": [\
