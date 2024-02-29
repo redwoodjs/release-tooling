@@ -27,6 +27,9 @@ describe("getPrsWithMilestone", () => {
             "messageHeadline": "Update MetaTags to be MetaData in Docs (#10053)",
           },
           "mergedAt": "2024-02-22T17:44:49Z",
+          "milestone": {
+            "title": "v7.0.3",
+          },
           "number": 10053,
           "title": "Update MetaTags to be Metadata in Docs",
           "url": "https://github.com/redwoodjs/redwood/pull/10053",
@@ -37,6 +40,9 @@ describe("getPrsWithMilestone", () => {
             "messageHeadline": "fix(render): reduce memory and handle server file  (#10055)",
           },
           "mergedAt": "2024-02-23T10:04:32Z",
+          "milestone": {
+            "title": "v7.0.3",
+          },
           "number": 10055,
           "title": "fix(render): reduce memory and handle server file ",
           "url": "https://github.com/redwoodjs/redwood/pull/10055",
@@ -47,6 +53,9 @@ describe("getPrsWithMilestone", () => {
             "messageHeadline": "Update studio.md (#10062)",
           },
           "mergedAt": "2024-02-24T01:21:51Z",
+          "milestone": {
+            "title": "v7.0.3",
+          },
           "number": 10062,
           "title": "Update studio.md",
           "url": "https://github.com/redwoodjs/redwood/pull/10062",
