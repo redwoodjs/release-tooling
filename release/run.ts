@@ -18,7 +18,7 @@ import {
 try {
   setUpLogs(new URL("../release_log.json", import.meta.url));
 
-  logSection("Making sure you're logged in to npm")
+  logSection("Making sure you're logged in to npm");
   await assertLoggedInToNpm();
 
   logSection("Getting the path to the Redwood monorepo via RWFW_PATH and cd-ing there");

@@ -22,10 +22,14 @@ export async function cherryPickCommits(commits: Commit[], {
       const res = resolveRes(await question("Ok to cherry pick? [Y/n/o(pen)] > "));
 
       if (res === "open") {
-        if (commit.url) {
-          await $`open ${commit.url}`;
-        } else {
-          console.log("There's no PR associated with this commit");
+        try {
+          if (commit.url) {
+            await $`open ${commit.url}`;
+          } else {
+            await $`open https://github.com/redwoodjs/redwood/commit/${commit.hash}`;
+          }
+        } catch (error) {
+          console.log("Couldn't open the PR or commit using either the PR url or the commit hash");
         }
         continue;
       } else if (res === "no") {
