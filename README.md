@@ -48,3 +48,31 @@ When it's time to release, run the `yarn release` command:
 ```
 yarn release
 ```
+
+## Contributing
+
+Use `yarn lint` and `yarn fmt` to lint and format your code respectively:
+
+```
+yarn lint
+yarn fmt
+```
+
+`yarn lint` uses [ESLint](https://eslint.org/) and `yarn fmt` uses [dprint](https://dprint.dev/). I couldn't get ESLint to play nicely with Yarn's zero-installs, so you'll have to rely on those two CLI commands for the time being.
+
+Running tests requires a bit more setup than I'd like, but here's what you need to do...
+
+- ensure you have the Redwood monorepo locally.
+- checkout the `release-tooling/main-test` and `release-tooling/next-test` branches
+
+  ```
+  cd $RWFW_PATH
+  git switch release-tooling/main-test
+  git switch release-tooling/next-test
+  ```
+
+Then you should be able to run the tests:
+
+```
+yarn test
+```
