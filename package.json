@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "lint": "eslint .",
-    "fmt": "dprint fmt --excludes .yarn/* .pnp.*",
+    "fmt": "dprint fmt",
     "release": "tsx ./release/run.ts",
     "reset-next": "tsx ./scripts/resetNext.ts",
     "test": "vitest run",
