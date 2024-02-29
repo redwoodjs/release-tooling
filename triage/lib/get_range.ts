@@ -1,9 +1,9 @@
 import { getReleaseBranches } from "@lib/branches.js";
-import { prompts } from '@lib/prompts.js'
+import { prompts } from "@lib/prompts.js";
 
 export async function getRange() {
   const releaseBranches = await getReleaseBranches();
-  console.log()
+  console.log();
 
   const choices = [
     "main...next",

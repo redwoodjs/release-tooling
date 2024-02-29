@@ -1,8 +1,8 @@
-import type { ProcessOutput } from 'zx'
+import type { ProcessOutput } from "zx";
 
 /**
  * Helper for getting the trimmed stdout from `zx`'s `ProcessOutput`
- * 
+ *
  * @example
  *
  * ```ts
@@ -10,5 +10,5 @@ import type { ProcessOutput } from 'zx'
  * ```
  */
 export function unwrap(processOutput: ProcessOutput) {
-  return processOutput.stdout.trim()
+  return processOutput.stdout.trim();
 }

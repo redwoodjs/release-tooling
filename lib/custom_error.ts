@@ -1,10 +1,10 @@
 export class CustomError extends Error {
-  name
-  title
+  name;
+  title;
 
-  constructor(message: string, title: string = '👷 Heads up') {
-    super(message)
-    this.name = this.constructor.name
-    this.title = title
+  constructor(message: string, title: string = "👷 Heads up") {
+    super(message);
+    this.name = this.constructor.name;
+    this.title = title;
   }
 }

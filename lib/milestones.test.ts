@@ -1,17 +1,24 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from "vitest";
 
-import { createMilestone, closeMilestone, getPrMilestone, getMilestone, getMilestones, getPrsWithMilestone } from './milestones.js'
+import {
+  closeMilestone,
+  // createMilestone,
+  getMilestone,
+  getMilestones,
+  getPrMilestone,
+  getPrsWithMilestone,
+} from "./milestones.js";
 
-describe('getPrMilestone', () => {
-  it('works', async () => {
-    const milestone = await getPrMilestone("https://github.com/redwoodjs/redwood/pull/9803")
-    expect(milestone).toEqual('chore')
-  })
-})
+describe("getPrMilestone", () => {
+  it("works", async () => {
+    const milestone = await getPrMilestone("https://github.com/redwoodjs/redwood/pull/9803");
+    expect(milestone).toEqual("chore");
+  });
+});
 
-describe('getPrsWithMilestone', () => {
-  it('works', async () => {
-    const prs = await getPrsWithMilestone('v7.0.3')
+describe("getPrsWithMilestone", () => {
+  it("works", async () => {
+    const prs = await getPrsWithMilestone("v7.0.3");
     expect(prs).toMatchInlineSnapshot(`
       [
         {
@@ -45,56 +52,62 @@ describe('getPrsWithMilestone', () => {
           "url": "https://github.com/redwoodjs/redwood/pull/10062",
         },
       ]
-    `)
-  })
-})
+    `);
+  });
+});
 
 const choreMilestone = {
-  title: 'chore',
+  title: "chore",
   id: "MDk6TWlsZXN0b25lNjc4MjU1MA==",
   number: 46,
-}
+};
 
-describe('getMilestones', () => {
-  it('works', async () => {
-    const milestones = await getMilestones()
+describe("getMilestones", () => {
+  it("works", async () => {
+    const milestones = await getMilestones();
     expect(milestones).toEqual(expect.arrayContaining([
       choreMilestone,
       {
-        title: 'next-release',
+        title: "next-release",
         id: "MI_kwDOC2M2f84Aa82f",
         number: 56,
       },
       {
-        title: 'next-release-patch',
+        title: "next-release-patch",
         id: "MDk6TWlsZXN0b25lNjc1Nzk0MQ==",
         number: 44,
       },
-    ]))
-  })
-})
+    ]));
+  });
+});
 
-describe('getMilestone', () => {
-  it('works', async () => {
-    const milestone = await getMilestone('chore')
-    expect(milestone).toEqual(choreMilestone)
-  })
+describe("getMilestone", () => {
+  it("works", async () => {
+    const milestone = await getMilestone("chore");
+    expect(milestone).toEqual(choreMilestone);
+  });
 
   it("throws if it can't get the milestone", async () => {
-    await expect(() => getMilestone('bazinga')).rejects.toThrowErrorMatchingInlineSnapshot(`[Error: Couldn't find an open milestone the the title "bazinga"]`)
-  })
-})
+    await expect(() => getMilestone("bazinga")).rejects.toThrowErrorMatchingInlineSnapshot(
+      `[Error: Couldn't find an open milestone the the title "bazinga"]`,
+    );
+  });
+});
 
-describe('createMilestone and closeMilestone', () => {
-  describe('closeMilestone', () => {
+describe("createMilestone and closeMilestone", () => {
+  describe("closeMilestone", () => {
     it("throws if it can't close the milestone", async () => {
-      await expect(() => closeMilestone('bazinga')).rejects.toThrowErrorMatchingInlineSnapshot(`[Error: Couldn't find an open milestone the the title "bazinga"]`)
-    })
+      await expect(() => closeMilestone("bazinga")).rejects.toThrowErrorMatchingInlineSnapshot(
+        `[Error: Couldn't find an open milestone the the title "bazinga"]`,
+      );
+    });
 
     it("throws if the milestone is already closed", async () => {
-      await expect(() => closeMilestone('v7.0.4')).rejects.toThrowErrorMatchingInlineSnapshot(`[Error: Couldn't find an open milestone the the title "v7.0.4"]`)
-    })
-  })
+      await expect(() => closeMilestone("v7.0.4")).rejects.toThrowErrorMatchingInlineSnapshot(
+        `[Error: Couldn't find an open milestone the the title "v7.0.4"]`,
+      );
+    });
+  });
 
   // it('works', async () => {
   //   const milestone = await createMilestone('release-tooling-test')
@@ -102,4 +115,4 @@ describe('createMilestone and closeMilestone', () => {
   //   const res = await closeMilestone('release-tooling-test')
   //   expect(res).toMatchInlineSnapshot()
   // })
-})
+});

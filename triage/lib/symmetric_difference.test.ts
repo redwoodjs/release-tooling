@@ -1,10 +1,10 @@
-import { $ } from 'zx'
+import { $ } from "zx";
 
-import { beforeAll, afterAll, describe, expect, it, test } from 'vitest'
+import { afterAll, beforeAll, describe, expect, it, test } from "vitest";
 
-import { assertRwfwPathAndSetCwd } from '@lib/cwd.js'
+import { assertRwfwPathAndSetCwd } from "@lib/cwd.js";
 
-import { colors } from './colors.js'
+import { colors } from "./colors.js";
 import {
   getPrettyLine,
   getSymmetricDifference,
@@ -13,21 +13,24 @@ import {
   lineIsGitLogUi,
   PADDING,
   resolveLine,
-} from './symmetric_difference.js'
+} from "./symmetric_difference.js";
 
-$.verbose = false
+$.verbose = false;
 
-describe('getSymmetricDifference', () => {
-  let resetCwd: () => void
+describe("getSymmetricDifference", () => {
+  let resetCwd: () => void;
   beforeAll(async () => {
-    resetCwd = await assertRwfwPathAndSetCwd()
-  })
+    resetCwd = await assertRwfwPathAndSetCwd();
+  });
   afterAll(() => {
-    resetCwd()
-  })
+    resetCwd();
+  });
 
-  it('works', async () => {
-    const symDiff = await getSymmetricDifference({ from: 'release-tooling/main-test', to: 'release-tooling/next-test' })
+  it("works", async () => {
+    const symDiff = await getSymmetricDifference({
+      from: "release-tooling/main-test",
+      to: "release-tooling/next-test",
+    });
     expect(symDiff).toMatchInlineSnapshot(`
       [
         "< 9b1dd056d2c33b23a63874f23f4efb5808e0660e Add support for additional env var files (#9961)",
@@ -189,58 +192,86 @@ describe('getSymmetricDifference', () => {
         " /  ",
         "o 49965f4db294112458dccabfce2b7044f3134bcb v7.0.0",
       ]
-    `)
-  })
-})
+    `);
+  });
+});
 
-test('lineIsGitLogUi', () => {
-  expect(lineIsGitLogUi("|\\")).toEqual(true)
-  expect(lineIsGitLogUi("/")).toEqual(true)
-  expect(lineIsGitLogUi("o 49965f4db294112458dccabfce2b7044f3134bcb v7.0.0")).toEqual(true)
-  expect(lineIsGitLogUi("o | 802c2519c6623bf3bd52c9c9628d61d2bbeea0ba Update installation.md (#9887)")).toEqual(true)
+test("lineIsGitLogUi", () => {
+  expect(lineIsGitLogUi("|\\")).toEqual(true);
+  expect(lineIsGitLogUi("/")).toEqual(true);
+  expect(lineIsGitLogUi("o 49965f4db294112458dccabfce2b7044f3134bcb v7.0.0")).toEqual(true);
+  expect(lineIsGitLogUi("o | 802c2519c6623bf3bd52c9c9628d61d2bbeea0ba Update installation.md (#9887)")).toEqual(true);
 
-  expect(lineIsGitLogUi("< 487548234b49bb93bb79ad89c7ac4a91ed6c0dc9 chore(deps): update dependency @playwright/test to v1.41.2 (#10040)")).toEqual(false)
-  expect(lineIsGitLogUi("< | 8b467685a7cdce55f8be6424793bc5e6ad450c0a chore(docs): align v6 docs with the next branch (#10034)")).toEqual(false)
-})
+  expect(
+    lineIsGitLogUi(
+      "< 487548234b49bb93bb79ad89c7ac4a91ed6c0dc9 chore(deps): update dependency @playwright/test to v1.41.2 (#10040)",
+    ),
+  ).toEqual(false);
+  expect(
+    lineIsGitLogUi(
+      "< | 8b467685a7cdce55f8be6424793bc5e6ad450c0a chore(docs): align v6 docs with the next branch (#10034)",
+    ),
+  ).toEqual(false);
+});
 
-test('lineIsAnnotatedTag', () => {
-  expect(lineIsAnnotatedTag("v7.0.0")).toEqual(true)
+test("lineIsAnnotatedTag", () => {
+  expect(lineIsAnnotatedTag("v7.0.0")).toEqual(true);
 
-  expect(lineIsAnnotatedTag("< 487548234b49bb93bb79ad89c7ac4a91ed6c0dc9 chore(deps): update dependency @playwright/test to v1.41.2 (#10040)")).toEqual(false)
-  expect(lineIsAnnotatedTag("< c9d225b4a401dd6afe282973fc7646bcbe101344 chore(changelog): add v7 (#10038)")).toEqual(false)
-  expect(lineIsAnnotatedTag("<   635d6dea677b28993661a2e46659ff8c987b7275 Merge branch 'release/major/v7.0.0'")).toEqual(false)
-  expect(lineIsAnnotatedTag("< | b9af37b39591b0004a47c97d34914de5aae22145 fix(deps): update storybook monorepo to v7.6.10 (#9917)")).toEqual(false)
-})
+  expect(
+    lineIsAnnotatedTag(
+      "< 487548234b49bb93bb79ad89c7ac4a91ed6c0dc9 chore(deps): update dependency @playwright/test to v1.41.2 (#10040)",
+    ),
+  ).toEqual(false);
+  expect(lineIsAnnotatedTag("< c9d225b4a401dd6afe282973fc7646bcbe101344 chore(changelog): add v7 (#10038)")).toEqual(
+    false,
+  );
+  expect(lineIsAnnotatedTag("<   635d6dea677b28993661a2e46659ff8c987b7275 Merge branch 'release/major/v7.0.0'"))
+    .toEqual(false);
+  expect(
+    lineIsAnnotatedTag(
+      "< | b9af37b39591b0004a47c97d34914de5aae22145 fix(deps): update storybook monorepo to v7.6.10 (#9917)",
+    ),
+  ).toEqual(false);
+});
 
-test('lineIsChore', () => {
-  expect(lineIsChore("<   635d6dea677b28993661a2e46659ff8c987b7275 Merge branch 'release/major/v7.0.0'")).toEqual(true)
-  expect(lineIsChore("< | 8ae6eb1ab306e9a3a925d9dbe9eb84c57f2cc67e chore: update yarn.lock")).toEqual(true)
+test("lineIsChore", () => {
+  expect(lineIsChore("<   635d6dea677b28993661a2e46659ff8c987b7275 Merge branch 'release/major/v7.0.0'")).toEqual(true);
+  expect(lineIsChore("< | 8ae6eb1ab306e9a3a925d9dbe9eb84c57f2cc67e chore: update yarn.lock")).toEqual(true);
 
-  expect(lineIsChore("< 487548234b49bb93bb79ad89c7ac4a91ed6c0dc9 chore(deps): update dependency @playwright/test to v1.41.2 (#10040)")).toEqual(false)
-  expect(lineIsChore("< | 8b467685a7cdce55f8be6424793bc5e6ad450c0a chore(docs): align v6 docs with the next branch (#10034)")).toEqual(false)
-})
+  expect(
+    lineIsChore(
+      "< 487548234b49bb93bb79ad89c7ac4a91ed6c0dc9 chore(deps): update dependency @playwright/test to v1.41.2 (#10040)",
+    ),
+  ).toEqual(false);
+  expect(
+    lineIsChore(
+      "< | 8b467685a7cdce55f8be6424793bc5e6ad450c0a chore(docs): align v6 docs with the next branch (#10034)",
+    ),
+  ).toEqual(false);
+});
 
-describe('resolveLine', async () => {
-  let resetCwd: () => void
+describe("resolveLine", async () => {
+  let resetCwd: () => void;
   beforeAll(async () => {
-    resetCwd = await assertRwfwPathAndSetCwd()
-  })
+    resetCwd = await assertRwfwPathAndSetCwd();
+  });
   afterAll(() => {
-    resetCwd()
-  })
+    resetCwd();
+  });
 
   const range = {
-    from: 'main',
-    to: 'next'
-  }
+    from: "main",
+    to: "next",
+  };
 
-  it('works', async () => {
-    const line = "< 487548234b49bb93bb79ad89c7ac4a91ed6c0dc9 chore(deps): update dependency @playwright/test to v1.41.2 (#10040)"
-    const milestone = 'chore'
+  it("works", async () => {
+    const line =
+      "< 487548234b49bb93bb79ad89c7ac4a91ed6c0dc9 chore(deps): update dependency @playwright/test to v1.41.2 (#10040)";
+    const milestone = "chore";
 
-    const commit = await resolveLine(line, { range })
+    const commit = await resolveLine(line, { range });
     expect(commit).toEqual({
-      line: [line.padEnd(PADDING), `(${milestone})`].join(' '),
+      line: [line.padEnd(PADDING), `(${milestone})`].join(" "),
       type: "commit",
       ref: range.to,
       notes: undefined,
@@ -251,38 +282,38 @@ describe('resolveLine', async () => {
       pr: "10040",
       url: "https://github.com/redwoodjs/redwood/pull/10040",
       milestone,
-    })
-  })
+    });
+  });
 
-  it('ui', async () => {
-    const line = "|\\"
+  it("ui", async () => {
+    const line = "|\\";
 
-    const commit = await resolveLine(line, { range })
+    const commit = await resolveLine(line, { range });
     expect(commit).toEqual({
       line,
-      type: 'ui',
+      type: "ui",
       ref: range.from,
-    })
-  })
+    });
+  });
 
-  it('chore', async () => {
-    const line = "<   635d6dea677b28993661a2e46659ff8c987b7275 Merge branch 'release/major/v7.0.0'"
+  it("chore", async () => {
+    const line = "<   635d6dea677b28993661a2e46659ff8c987b7275 Merge branch 'release/major/v7.0.0'";
 
-    const commit = await resolveLine(line, { range })
+    const commit = await resolveLine(line, { range });
     expect(commit).toEqual({
       line,
-      type: 'chore',
+      type: "chore",
       ref: range.from,
 
       hash: "635d6dea677b28993661a2e46659ff8c987b7275",
       message: "Merge branch 'release/major/v7.0.0'",
-    })
-  })
+    });
+  });
 
-  it('annotated tag', async () => {
-    const line = "< 49965f4db294112458dccabfce2b7044f3134bcb v7.0.0"
+  it("annotated tag", async () => {
+    const line = "< 49965f4db294112458dccabfce2b7044f3134bcb v7.0.0";
 
-    const commit = await resolveLine(line, { range })
+    const commit = await resolveLine(line, { range });
     expect(commit).toEqual({
       line,
       type: "tag",
@@ -290,66 +321,65 @@ describe('resolveLine', async () => {
 
       hash: "49965f4db294112458dccabfce2b7044f3134bcb",
       message: "v7.0.0",
-    })
-  })
+    });
+  });
 
+  it("no pr", async () => {
+    const line = "< | 8ae6eb1ab306e9a3a925d9dbe9eb84c57f2cc67e chore: update yarn.lock";
 
-  it('no pr', async () => {
-    const line = "< | 8ae6eb1ab306e9a3a925d9dbe9eb84c57f2cc67e chore: update yarn.lock"
-
-    const commit = await resolveLine(line, { range })
+    const commit = await resolveLine(line, { range });
     expect(commit).toEqual({
       line,
-      type: 'chore',
+      type: "chore",
       ref: range.from,
 
       hash: "8ae6eb1ab306e9a3a925d9dbe9eb84c57f2cc67e",
       message: "chore: update yarn.lock",
-    })
-  })
+    });
+  });
 
-  it('ref', async () => {
-    const line = "< | e1e3f35e657743eac545e7592f1a6cb774f27b05 fix(gql): Add back gql global type (#9888)"
-    const milestone = 'v7.0.0'
+  it("ref", async () => {
+    const line = "< | e1e3f35e657743eac545e7592f1a6cb774f27b05 fix(gql): Add back gql global type (#9888)";
+    const milestone = "v7.0.0";
 
-    const commit = await resolveLine(line, { range })
+    const commit = await resolveLine(line, { range });
     expect(commit).toEqual({
-      line: [line.padEnd(PADDING), `(${milestone})`].join(' '),
-      type: 'commit',
+      line: [line.padEnd(PADDING), `(${milestone})`].join(" "),
+      type: "commit",
       ref: range.to,
 
       hash: "e1e3f35e657743eac545e7592f1a6cb774f27b05",
-      message: 'fix(gql): Add back gql global type (#9888)',
+      message: "fix(gql): Add back gql global type (#9888)",
 
       pr: "9888",
       url: "https://github.com/redwoodjs/redwood/pull/9888",
       milestone,
-    })
-  })
-})
+    });
+  });
+});
 
-test('getPrettyLine', () => {
-  const range = { from: 'main', to: 'next' }
-  const commit = { line: 'line' } 
+test("getPrettyLine", () => {
+  const range = { from: "main", to: "next" };
+  const commit = { line: "line" };
 
-  commit.type = 'ui'
-  expect(getPrettyLine(commit, { range })).toEqual(colors.choreOrDecorative(commit.line))
-  commit.type = 'tag'
-  expect(getPrettyLine(commit, { range })).toEqual(colors.choreOrDecorative(commit.line))
-  commit.type = 'chore'
-  expect(getPrettyLine(commit, { range })).toEqual(colors.choreOrDecorative(commit.line))
+  commit.type = "ui";
+  expect(getPrettyLine(commit, { range })).toEqual(colors.choreOrDecorative(commit.line));
+  commit.type = "tag";
+  expect(getPrettyLine(commit, { range })).toEqual(colors.choreOrDecorative(commit.line));
+  commit.type = "chore";
+  expect(getPrettyLine(commit, { range })).toEqual(colors.choreOrDecorative(commit.line));
 
-  commit.type = 'commit'
-  commit.ref = range.to
-  expect(getPrettyLine(commit, { range })).toEqual(colors.wasCherryPickedWithChanges(commit.line))
+  commit.type = "commit";
+  commit.ref = range.to;
+  expect(getPrettyLine(commit, { range })).toEqual(colors.wasCherryPickedWithChanges(commit.line));
 
-  commit.ref = range.from
+  commit.ref = range.from;
 
-  commit.milestone = 'SSR'
-  expect(getPrettyLine(commit, { range })).toEqual(colors.shouldntBeCherryPicked(commit.line))
-  commit.milestone = 'RSC'
-  expect(getPrettyLine(commit, { range })).toEqual(colors.shouldntBeCherryPicked(commit.line))
-  delete commit.milestone
-  commit.notes = 'abc'
-  expect(getPrettyLine(commit, { range })).toEqual(colors.shouldntBeCherryPicked(commit.line))
-})
+  commit.milestone = "SSR";
+  expect(getPrettyLine(commit, { range })).toEqual(colors.shouldntBeCherryPicked(commit.line));
+  commit.milestone = "RSC";
+  expect(getPrettyLine(commit, { range })).toEqual(colors.shouldntBeCherryPicked(commit.line));
+  delete commit.milestone;
+  commit.notes = "abc";
+  expect(getPrettyLine(commit, { range })).toEqual(colors.shouldntBeCherryPicked(commit.line));
+});

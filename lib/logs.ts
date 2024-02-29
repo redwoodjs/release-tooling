@@ -1,13 +1,13 @@
 import { fs } from "zx";
 
-export const logs: any[] = []
+export const logs: any[] = [];
 
 export function setUpLogs(file: URL) {
-  process.on('exit', () => {
+  process.on("exit", () => {
     if (logs.length === 0) {
-      return
+      return;
     }
 
-    fs.writeJsonSync(file, logs, { spaces: 2})
-  })
+    fs.writeJsonSync(file, logs, { spaces: 2 });
+  });
 }

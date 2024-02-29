@@ -1,6 +1,6 @@
 export interface Range {
-  from: string
-  to: string
+  from: string;
+  to: string;
 }
 
 export type Commit = {
@@ -15,16 +15,16 @@ export type Commit = {
   pr?: string;
   url?: string;
   milestone?: string;
-}
+};
 
-export type PrettyCommit = Commit & { pretty?: string }
+export type PrettyCommit = Commit & { pretty?: string };
 
 export interface PR {
-  id: string
-  number: number
-  title: string
-  url: string
+  id: string;
+  number: number;
+  title: string;
+  url: string;
   mergeCommit: {
-    messageHeadline: string
-  }
+    messageHeadline: string;
+  };
 }
