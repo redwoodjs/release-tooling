@@ -13,7 +13,7 @@ import {
   createMilestone,
   getMilestone,
   getPrsWithMilestone,
-  sortByMergedAt,
+  sortPrsByMergedAt,
   updatePrMilestone,
 } from "@lib/milestones.js";
 import { resIsYes } from "@lib/prompts.js";
@@ -189,7 +189,7 @@ async function updateReleaseBranch(options: ReleaseOptions & { releaseBranch: st
     const nextReleasePrs = await getPrsWithMilestone("next-release");
     prs.push(...nextReleasePrs);
   }
-  prs.sort(sortByMergedAt);
+  prs.sort(sortPrsByMergedAt);
   logs.push("prs", prs);
 
   let shouldCherryPick = false;
