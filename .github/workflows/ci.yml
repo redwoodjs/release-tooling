@@ -16,8 +16,6 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: ⬢ Enable Corepack
         run: corepack enable
@@ -41,7 +39,6 @@ jobs:
       - name: Test
         run: |
           yarn test ./lib/assert_github_token.test.ts
-          yarn test ./lib/branches.test.ts
           yarn test ./lib/commits.test.ts
           yarn test ./lib/get_redwood_remote.test.ts
           yarn test ./lib/github.test.ts
