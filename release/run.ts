@@ -3,6 +3,7 @@ import { consoleBoxen, separator } from "@lib/console_helpers.js";
 import { CustomError } from "@lib/custom_error.js";
 import { assertRwfwPathAndSetCwd } from "@lib/cwd.js";
 import { getRedwoodRemote } from "@lib/get_redwood_remote.js";
+import { setUpLogs } from "@lib/logs.js";
 import { assertNoNoMilestonePrs } from "@lib/milestones.js";
 import { getDesiredSemver } from "@lib/prompts.js";
 
@@ -15,6 +16,8 @@ import {
 } from "./lib/release.js";
 
 try {
+  setUpLogs(new URL("../release_log.json", import.meta.url));
+
   await assertLoggedInToNpm();
 
   console.log(separator);

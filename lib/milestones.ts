@@ -4,6 +4,7 @@ import { fs } from "zx";
 
 import { CustomError } from "./custom_error.js";
 import { getGitHubFetchHeaders, gqlGitHub } from "./github.js";
+import { logs } from "./logs.js";
 import type { PR } from "./types.js";
 
 export async function getPrMilestone(prUrl: string) {
@@ -93,6 +94,9 @@ const getPrsWithMilestoneQuery = `\
             messageHeadline
           }
           mergedAt
+          milestone {
+            title
+          }
         }
       }
     }
@@ -153,7 +157,7 @@ export async function closeMilestone(title: string) {
   const milestone = await getMilestone(title);
 
   const url = `https://api.github.com/repos/redwoodjs/redwood/milestones/${milestone.number}`;
-  console.log(`Posting to ${url}`);
+  logs.push(`Posting to ${url}`);
   const headers = await getGitHubFetchHeaders();
 
   const res = await fetch(url, {
@@ -162,7 +166,7 @@ export async function closeMilestone(title: string) {
     body: JSON.stringify({ state: "closed" }),
   });
   const json = await res.json();
-  console.log(json);
+  logs.push("close milestone response json", json);
 }
 
 export async function getMilestones() {

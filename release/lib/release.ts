@@ -7,6 +7,7 @@ import { cherryPickCommits, reportCommitsEligibleForCherryPick } from "@lib/cher
 import { commitIsInRef, getCommitHash } from "@lib/commits.js";
 import { separator } from "@lib/console_helpers.js";
 import { CustomError } from "@lib/custom_error.js";
+import { logs } from "@lib/logs.js";
 import {
   closeMilestone,
   createMilestone,
@@ -122,15 +123,17 @@ export async function release(options: ReleaseOptions) {
   await $`git tag -am ${options.nextRelease} "${options.nextRelease}"`;
 
   console.log(separator);
-  await question("Press anything to push the tag to GitHub > ");
+  await question(
+    `Press anything to push the ${chalk.magenta(options.nextRelease)} tag to ${chalk.magenta(options.remote)} > `,
+  );
   await $`git push -u ${options.remote} ${releaseBranch} --follow-tags`;
 
   console.log(separator);
-  await question(`Press anything to close the ${options.nextRelease} milestone > `);
+  await question(`Press anything to close the ${chalk.magenta(options.nextRelease)} milestone > `);
   await closeMilestone(options.nextRelease);
 
   console.log(separator);
-  await question("Press anything to merge the release branch into next > ");
+  await question(`Press anything to merge ${chalk.magenta(releaseBranch)} into ${chalk.magenta("next")} > `);
   await mergeReleaseBranch({ ...options, releaseBranch });
 }
 
@@ -178,33 +181,20 @@ async function switchToReleaseBranch(
 }
 
 async function updateReleaseBranch(options: ReleaseOptions & { releaseBranch: string }) {
-  const prs = await getPrsWithMilestone("next-release-patch");
-  if (options.desiredSemver === "patch" && prs.length === 0) {
-    throw new CustomError(
-      "You're release a patch but there are no PRs with the next-release-patch milestone",
-      "🤔 Hmmm...",
-    );
-  }
-
+  const prs = await getPrsWithMilestone(options.nextRelease);
+  const nextReleasePatchPrs = await getPrsWithMilestone("next-release-patch");
+  prs.push(...nextReleasePatchPrs);
   if (options.desiredSemver === "minor") {
     const nextReleasePrs = await getPrsWithMilestone("next-release");
-    if (nextReleasePrs.length === 0) {
-      throw new CustomError(
-        "You're releasing a minor but there are no PRs with the next-release milestone",
-        "🤔 Hmmm...",
-      );
-    }
     prs.push(...nextReleasePrs);
   }
+  logs.push("prs", prs);
 
   let shouldCherryPick = false;
-
   for (const pr of prs) {
     pr.line = pr.mergeCommit.messageHeadline;
-
     if (!await commitIsInRef(options.releaseBranch, pr.line)) {
       shouldCherryPick = true;
-
       const line = unwrap(await $`git log next --oneline --no-abbrev-commit --grep ${pr.line}`);
       pr.hash = await getCommitHash(line);
     }
@@ -215,7 +205,8 @@ async function updateReleaseBranch(options: ReleaseOptions & { releaseBranch: st
     return;
   }
 
-  reportCommitsEligibleForCherryPick(prs);
+  const prsEligibleForCherryPick = prs.filter((pr) => pr.hash);
+  reportCommitsEligibleForCherryPick(prsEligibleForCherryPick);
 
   let milestone;
   try {
@@ -224,7 +215,7 @@ async function updateReleaseBranch(options: ReleaseOptions & { releaseBranch: st
     milestone = await createMilestone(options.nextRelease);
   }
 
-  await cherryPickCommits(prs, {
+  await cherryPickCommits(prsEligibleForCherryPick, {
     range: { from: "next", to: options.releaseBranch },
     afterCherryPick: async (pr) => {
       await updatePrMilestone(pr.id, milestone.id);
@@ -279,7 +270,6 @@ async function updatePackageVersions({ nextRelease }: Pick<ReleaseOptions, "next
   await $`yarn install`;
   await $`yarn dedupe`;
   await $`git add .`;
-  await $`git commit -m "chore: update package versions to ${nextRelease}"`;
 
   for (
     const templatePath of [

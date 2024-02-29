@@ -16,3 +16,6 @@ node_modules
 # Triage
 triage/lib/cache
 triage_log.json
+
+# Release
+release_log.json

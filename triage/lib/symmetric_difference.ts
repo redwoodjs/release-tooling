@@ -58,7 +58,7 @@ export async function resolveLine(line: string, { range }: { range: Range }) {
 
   if (lineIsGitLogUi(commit.line)) {
     commit.type = "ui";
-    logs.push(commit);
+    logs.push("ui", commit);
     return commit;
   }
 
@@ -68,13 +68,13 @@ export async function resolveLine(line: string, { range }: { range: Range }) {
   if (lineIsAnnotatedTag(commit.message)) {
     commit.type = "tag";
     commit.ref = commit.message;
-    logs.push(commit);
+    logs.push("tag", commit);
     return commit;
   }
 
   if (lineIsChore(line)) {
     commit.type = "chore";
-    logs.push(commit);
+    logs.push("chore", commit);
     return commit;
   }
 
@@ -85,14 +85,14 @@ export async function resolveLine(line: string, { range }: { range: Range }) {
 
   commit.pr = getCommitPr(commit.message);
   if (!commit.pr) {
-    logs.push(commit);
+    logs.push("commit", commit);
     return commit;
   }
   commit.url = `https://github.com/redwoodjs/redwood/pull/${commit.pr}`;
   commit.milestone = await getPrMilestone(commit.url);
   commit.line = [commit.line.padEnd(PADDING), `(${commit.milestone})`].join(" ");
 
-  logs.push(commit);
+  logs.push("pr", commit);
   return commit;
 }
 
