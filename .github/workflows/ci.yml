@@ -36,3 +36,13 @@ jobs:
       - name: Format
         run: yarn fmt
 
+      - name: Test
+        run: |
+          yarn test ./lib/assert_github_token.test.ts
+          yarn test ./lib/branches.test.ts
+          yarn test ./lib/commits.test.ts
+          yarn test ./lib/get_redwood_remote.test.ts
+          yarn test ./lib/github.test.ts
+          yarn test ./lib/milestones.test.ts
+          yarn test ./lib/prompts.test.ts
+          yarn test ./triage/lib/triage.test.ts
