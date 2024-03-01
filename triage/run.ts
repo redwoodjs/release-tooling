@@ -19,7 +19,7 @@ try {
 
   logSection("Getting the path to the Redwood monorepo via RWFW_PATH and cd-ing there");
   await assertRwfwPathAndSetCwd();
-  logSection("Asserting that the work tree is clean in the Redwood monorepo");
+  logSection("Asserting that the work tree in RWFW_PATH is clean");
   await assertWorkTreeIsClean();
 
   logSection("Getting the name of the GitHub remote for the Redwood monorepo");

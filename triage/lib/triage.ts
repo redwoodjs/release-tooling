@@ -4,7 +4,7 @@ import { $, chalk, fs, path, question } from "zx";
 
 import { pushBranch } from "@lib/branches.js";
 import { cherryPickCommits, reportCommitsEligibleForCherryPick } from "@lib/cherry_pick_commits.js";
-import { consoleBoxen, separator } from "@lib/console_helpers.js";
+import { consoleBoxen, logSection, separator } from "@lib/console_helpers.js";
 import { pushNotes } from "@lib/notes.js";
 import { resIsYes } from "@lib/prompts.js";
 import type { Commit, PrettyCommit, Range } from "@lib/types.js";
@@ -36,16 +36,17 @@ export async function triageRange(range: Range, { remote }: { remote: string }) 
   const commitsEligibleForCherryPick = commits.filter((commit) => commitIsEligibleForCherryPick(commit, { range }));
   console.log(separator);
   if (!commitsEligibleForCherryPick.length) {
-    console.log("✨ No commits to triage");
+    consoleBoxen("✨ Done", "No commits to triage");
     return;
   }
 
+  reportNotes(commits);
   reportCommitsEligibleForCherryPick(commitsEligibleForCherryPick);
   console.log(separator);
   await cherryPickCommits(commitsEligibleForCherryPick.toReversed(), { range });
 
-  console.log(separator);
-  const okToPushNotes = resIsYes(await question(`Ok to push notes to ${chalk.magenta("origin")}? [Y/n] > `));
+  logSection(`Pushing git notes and the ${range.to} branch`);
+  const okToPushNotes = resIsYes(await question(`Ok to push git notes to ${chalk.magenta("origin")}? [Y/n] > `));
   if (okToPushNotes) {
     await pushNotes(remote);
   }
@@ -121,4 +122,12 @@ export function commitIsEligibleForCherryPick(commit: Commit, { range }: { range
   }
 
   return true;
+}
+
+function reportNotes(commits: PrettyCommit[]) {
+  const commitsWithNotes = commits.filter(commit => commit.notes);
+  const message = commitsWithNotes.map(commit => {
+    return [commit.line, chalk.cyan(commit.notes), ""].join("\n");
+  }).join("\n");
+  consoleBoxen(`📝 ${commitsWithNotes.length} commit(s) with notes`, message);
 }

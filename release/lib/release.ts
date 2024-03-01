@@ -5,7 +5,7 @@ import { $, cd, chalk, fs, path, question } from "zx";
 import { branchExists, pushBranch } from "@lib/branches.js";
 import { cherryPickCommits, reportCommitsEligibleForCherryPick } from "@lib/cherry_pick_commits.js";
 import { commitIsInRef, getCommitHash } from "@lib/commits.js";
-import { logSection, separator } from "@lib/console_helpers.js";
+import { consoleBoxen, logSection, separator } from "@lib/console_helpers.js";
 import { CustomError } from "@lib/custom_error.js";
 import { logs } from "@lib/logs.js";
 import {
@@ -216,7 +216,7 @@ async function updateReleaseBranch(options: ReleaseOptions & { releaseBranch: st
   }
 
   if (!shouldCherryPick) {
-    console.log("✨ No commits to triage");
+    consoleBoxen("✨ Done", "No commits to triage");
     return;
   }
 

@@ -68,5 +68,5 @@ export async function cherryPickCommits(commits: Commit[], {
 }
 
 export function reportCommitsEligibleForCherryPick(commits: Commit[]) {
-  consoleBoxen(`🧮 ${commits.length} commits to triage`, commits.map(commit => commit.line).join("\n"));
+  consoleBoxen(`🧮 ${commits.length} commit(s) to triage`, commits.map(commit => commit.line).join("\n"));
 }
