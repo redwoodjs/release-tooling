@@ -199,6 +199,18 @@ async function updateReleaseBranch(options: ReleaseOptions & { releaseBranch: st
     if (!await commitIsInRef(options.releaseBranch, pr.line)) {
       shouldCherryPick = true;
       const line = unwrap(await $`git log next --oneline --no-abbrev-commit --grep ${pr.line}`);
+
+      if (line === "") {
+        console.log();
+        throw new CustomError([
+          "Couldn't find the commit for",
+          "",
+          `  ${pr.line}`,
+          "",
+          `in the ${chalk.magenta("next")} branch. Have you triaged?`,
+        ].join("\n"));
+      }
+
       pr.hash = await getCommitHash(line);
     }
   }
