@@ -41,7 +41,7 @@ export async function triageRange(range: Range, { remote }: { remote: string }) 
   }
 
   reportNotes(commits);
-  reportCommitsEligibleForCherryPick(commitsEligibleForCherryPick);
+  reportCommitsEligibleForCherryPick(commitsEligibleForCherryPick.toReversed());
   console.log(separator);
   await cherryPickCommits(commitsEligibleForCherryPick.toReversed(), { range });
 
@@ -127,7 +127,7 @@ export function commitIsEligibleForCherryPick(commit: Commit, { range }: { range
 function reportNotes(commits: PrettyCommit[]) {
   const commitsWithNotes = commits.filter(commit => commit.notes);
   const message = commitsWithNotes.map(commit => {
-    return [commit.line, chalk.cyan(commit.notes), ""].join("\n");
+    return [commit.line, chalk.cyan(commit.notes)].join("\n");
   }).join("\n");
   consoleBoxen(`📝 ${commitsWithNotes.length} commit(s) with notes`, message);
 }
