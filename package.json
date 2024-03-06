@@ -28,7 +28,7 @@
     "prompts": "2.4.2",
     "semver": "7.6.0",
     "tsx": "4.7.1",
-    "typescript": "5.3.3",
+    "typescript": "5.4.2",
     "typescript-eslint": "7.1.1",
     "vite": "5.1.5",
     "vite-tsconfig-paths": "4.3.1",
