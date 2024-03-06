@@ -12,7 +12,7 @@ export function assertGitHubToken() {
       chalk.magenta("REDWOOD_GITHUB_TOKEN")
     } environment variable isn't set. Set it to a GitHub personal access token:`,
     "",
-    `  ${chalk.green("export REDWOOD_GITHUB_TOKEN='...'")}`,
+    chalk.green("  export REDWOOD_GITHUB_TOKEN='...'"),
     "",
     `in one of your shell start-up files (e.g. ${chalk.magenta("~/.bashrc")} or ${chalk.magenta("~/.zshrc")})`,
     "or in a .env file in this directory that you create.",

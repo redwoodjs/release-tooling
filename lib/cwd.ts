@@ -13,7 +13,7 @@ export async function assertRwfwPathAndSetCwd() {
     throw new CustomError([
       `The ${chalk.magenta("RWFW_PATH")} environment variable isn't set. Set it to the path of the Redwood monorepo:`,
       "",
-      `  ${chalk.green("export RWFW_PATH='/path/to/redwoodjs/redwood'")}`,
+      chalk.green("  export RWFW_PATH='/path/to/redwoodjs/redwood'"),
       "",
       `in one of your shell start-up files (e.g. ${chalk.magenta("~/.bashrc")} or ${chalk.magenta("~/.zshrc")})`,
       "or in a .env file in this directory that you create",
