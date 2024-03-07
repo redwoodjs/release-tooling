@@ -1,5 +1,5 @@
 import { gqlGitHub, labelsToIds } from "@lib/github.js";
-import { milestonesToIds } from "@lib/milestones.js";
+import { getPrsFromSearchQuery, milestonesToIds } from "@lib/milestones.js";
 
 async function main() {
   console.log("Getting renovate PRs...");
@@ -9,6 +9,7 @@ async function main() {
     return;
   }
 
+  console.log();
   console.log(`Found ${prs.length} PRs`);
   console.log(prs.map(pr => `• ${pr.title}`).join("\n"));
   console.log();
@@ -23,37 +24,10 @@ async function main() {
 await main();
 
 async function getRenovatePrs() {
-  const query = `\
-    query ($search: String!) {
-      search(
-        query: $search
-        first: 100
-        type: ISSUE
-      ) {
-        nodes {
-          ... on PullRequest {
-            id
-            number
-            title
-            url
-            mergeCommit {
-              messageHeadline
-            }
-            milestone {
-              title
-            }
-            mergedAt
-          }
-        }
-      }
-    }
-  `;
-
   const variables = {
     search: "repo:redwoodjs/redwood is:open is:pr author:app/renovate",
   };
-
-  const { data } = await gqlGitHub({ query, variables });
+  const { data } = await gqlGitHub({ query: getPrsFromSearchQuery, variables });
   return data.search.nodes;
 }
 

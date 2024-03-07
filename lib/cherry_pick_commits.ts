@@ -21,6 +21,10 @@ export async function cherryPickCommits(commits: Commit[], {
     while (true) {
       const res = resolveRes(await question("Ok to cherry pick? [Y/n/o(pen)] > "));
 
+      if (res === "skip") {
+        break;
+      }
+
       if (res === "open") {
         try {
           if (commit.url) {
@@ -32,7 +36,9 @@ export async function cherryPickCommits(commits: Commit[], {
           console.log("Couldn't open the PR or commit using either the PR url or the commit hash");
         }
         continue;
-      } else if (res === "no") {
+      }
+
+      if (res === "no") {
         let res = await question("Add a note explaining why not > ");
         res = `(${login}) ${res}`;
         await $`git notes add -m ${res} ${commit.hash}`;

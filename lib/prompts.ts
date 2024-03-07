@@ -23,6 +23,11 @@ export function resolveRes(res: string) {
     return "open";
   }
 
+  const isSkip = resIsOpen(res);
+  if (isSkip) {
+    return "skip";
+  }
+
   return "no";
 }
 
@@ -34,6 +39,11 @@ export function resIsYes(res: string) {
 export function resIsOpen(res: string) {
   res = res.toLocaleLowerCase();
   return res === "open" || res === "o";
+}
+
+export function resIsSkip(res: string) {
+  res = res.toLocaleLowerCase();
+  return res === "skip" || res === "s";
 }
 
 export async function getDesiredSemver() {

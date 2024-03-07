@@ -67,7 +67,7 @@ export async function getPrsWithMilestone(milestone?: string): Promise<PR[]> {
     search.push(`milestone:${milestone}`);
   }
 
-  const res = await gqlGitHub({ query: getPrsWithMilestoneQuery, variables: { search: search.join(" ") } });
+  const res = await gqlGitHub({ query: getPrsFromSearchQuery, variables: { search: search.join(" ") } });
   const prs = res.data.search.nodes;
   prs.sort(sortPrsByMergedAt);
 
@@ -78,7 +78,7 @@ export function sortPrsByMergedAt(prA: PR, prB: PR) {
   return new Date(prA.mergedAt) > new Date(prB.mergedAt) ? 1 : -1;
 }
 
-const getPrsWithMilestoneQuery = `\
+export const getPrsFromSearchQuery = `\
   query ($search: String!) {
     search(
       query: $search
