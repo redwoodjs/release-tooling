@@ -189,5 +189,7 @@
   "https://github.com/redwoodjs/redwood/pull/10121": "RSC",
   "https://github.com/redwoodjs/redwood/pull/10082": "next-release-patch",
   "https://github.com/redwoodjs/redwood/pull/10118": "next-release-patch",
-  "https://github.com/redwoodjs/redwood/pull/10122": "chore"
+  "https://github.com/redwoodjs/redwood/pull/10122": "chore",
+  "https://github.com/redwoodjs/redwood/pull/10091": "next-release",
+  "https://github.com/redwoodjs/redwood/pull/10092": "next-release"
 }
