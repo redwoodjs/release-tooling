@@ -178,12 +178,16 @@
   "https://github.com/redwoodjs/redwood/pull/10097": "SSR",
   "https://github.com/redwoodjs/redwood/pull/10105": "RSC",
   "https://github.com/redwoodjs/redwood/pull/10087": "next-release",
-  "https://github.com/redwoodjs/redwood/pull/10112": "next-release-patch",
+  "https://github.com/redwoodjs/redwood/pull/10112": "v7.0.7",
   "https://github.com/redwoodjs/redwood/pull/10111": "RSC",
   "https://github.com/redwoodjs/redwood/pull/10099": "RSC",
-  "https://github.com/redwoodjs/redwood/pull/10117": "next-release-patch",
+  "https://github.com/redwoodjs/redwood/pull/10117": "v7.0.7",
   "https://github.com/redwoodjs/redwood/pull/10106": "RSC",
   "https://github.com/redwoodjs/redwood/pull/10108": "RSC",
   "https://github.com/redwoodjs/redwood/pull/10031": "RSC",
-  "https://github.com/redwoodjs/redwood/pull/10102": "RSC"
+  "https://github.com/redwoodjs/redwood/pull/10102": "RSC",
+  "https://github.com/redwoodjs/redwood/pull/10121": "RSC",
+  "https://github.com/redwoodjs/redwood/pull/10082": "next-release-patch",
+  "https://github.com/redwoodjs/redwood/pull/10118": "next-release-patch",
+  "https://github.com/redwoodjs/redwood/pull/10122": "chore"
 }
