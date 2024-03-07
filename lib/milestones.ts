@@ -104,11 +104,11 @@ const getPrsWithMilestoneQuery = `\
   }
 `;
 
-// const milestonesToIds = {
-//   'chore': 'MDk6TWlsZXN0b25lNjc4MjU1MA==',
-//   'next-release': 'MI_kwDOC2M2f84Aa82f',
-//   'next-release-patch': 'MDk6TWlsZXN0b25lNjc1Nzk0MQ==',
-// }
+export const milestonesToIds = {
+  chore: "MDk6TWlsZXN0b25lNjc4MjU1MA==",
+  "next-release": "MI_kwDOC2M2f84Aa82f",
+  "next-release-patch": "MDk6TWlsZXN0b25lNjc1Nzk0MQ==",
+};
 
 export async function assertNoNoMilestonePrs() {
   const noMilestonePrs = await getPrsWithMilestone();

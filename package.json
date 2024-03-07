@@ -10,6 +10,8 @@
     "test": "vitest run",
     "release": "tsx ./release/run.ts",
     "triage": "tsx ./triage/run.ts",
+    "renovate-open": "tsx ./renovate/open.ts",
+    "renovate-update": "tsx ./renovate/update.ts",
     "update-pr-milestone-cache": "tsx ./scripts/update_pr_milestone_cache.ts",
     "reset-next": "tsx ./scripts/resetNext.ts"
   },
