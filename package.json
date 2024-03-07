@@ -14,7 +14,7 @@
     "renovate-release-notes": "tsx ./renovate/release_notes.ts",
     "renovate-update": "tsx ./renovate/update.ts",
     "update-pr-milestone-cache": "tsx ./scripts/update_pr_milestone_cache.ts",
-    "reset-next": "tsx ./scripts/resetNext.ts"
+    "reset-next": "tsx ./scripts/reset_next.ts"
   },
   "devDependencies": {
     "@eslint/js": "8.57.0",

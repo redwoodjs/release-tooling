@@ -23,7 +23,7 @@ export function resolveRes(res: string) {
     return "open";
   }
 
-  const isSkip = resIsOpen(res);
+  const isSkip = resIsSkip(res);
   if (isSkip) {
     return "skip";
   }

@@ -56,10 +56,14 @@ export async function cherryPickCommits(commits: Commit[], {
         break;
       } catch (_error) {
         console.log();
-        console.log(chalk.yellow([
-          "✋ Couldn't cleanly cherry pick. Resolve the conflicts and run `git cherry-pick --continue`",
-          "🙅 Don't edit the commit message!",
-        ].join("\n")));
+        consoleBoxen(
+          "✋ Couldn't cleanly cherry pick",
+          [
+            `Resolve the conflicts and run ${chalk.green("git cherry-pick --continue")}.`,
+            "",
+            chalk.yellow("Don't edit the commit message!"),
+          ].join("\n"),
+        );
         console.log();
         await question("Press anything to continue > ");
         await afterCherryPick?.(commit);

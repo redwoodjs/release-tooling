@@ -132,7 +132,15 @@ export async function release(options: ReleaseOptions) {
 
   logSection("Closing the milestone, and merging the release branch into next");
   await question(`Press anything to close the ${chalk.magenta(options.nextRelease)} milestone > `);
-  await closeMilestone(options.nextRelease);
+  try {
+    await closeMilestone(options.nextRelease);
+  } catch (error) {
+    console.log();
+    consoleBoxen(
+      "✋ Couldn't close the milestone",
+      "You'll need to do that manually unfortunately. Sorry!",
+    );
+  }
 
   logSection("Merging the release branch into next");
   await question(`Press anything to merge ${chalk.magenta(releaseBranch)} into ${chalk.magenta("next")} > `);
@@ -186,16 +194,27 @@ async function updateReleaseBranch(options: ReleaseOptions & { releaseBranch: st
   const prs = await getPrsWithMilestone(options.nextRelease);
   const nextReleasePatchPrs = await getPrsWithMilestone("next-release-patch");
   prs.push(...nextReleasePatchPrs);
+
   if (options.desiredSemver === "minor") {
     const nextReleasePrs = await getPrsWithMilestone("next-release");
     prs.push(...nextReleasePrs);
   }
+
   prs.sort(sortPrsByMergedAt);
   logs.push("prs", prs);
 
+  let milestone;
+  try {
+    milestone = await getMilestone(options.nextRelease);
+  } catch (_error) {
+    milestone = await createMilestone(options.nextRelease);
+  }
+
   let shouldCherryPick = false;
+
   for (const pr of prs) {
     pr.line = pr.mergeCommit.messageHeadline;
+
     if (!await commitIsInRef(options.releaseBranch, pr.line)) {
       shouldCherryPick = true;
       const line = unwrap(await $`git log next --oneline --no-abbrev-commit --grep ${pr.line}`);
@@ -212,6 +231,10 @@ async function updateReleaseBranch(options: ReleaseOptions & { releaseBranch: st
       }
 
       pr.hash = await getCommitHash(line);
+    } else {
+      if (pr.milestone.title !== options.nextRelease) {
+        await updatePrMilestone(pr.id, milestone.id);
+      }
     }
   }
 
@@ -223,19 +246,13 @@ async function updateReleaseBranch(options: ReleaseOptions & { releaseBranch: st
   const prsEligibleForCherryPick = prs.filter((pr) => pr.hash);
   reportCommitsEligibleForCherryPick(prsEligibleForCherryPick);
 
-  let milestone;
-  try {
-    milestone = await getMilestone(options.nextRelease);
-  } catch (_error) {
-    milestone = await createMilestone(options.nextRelease);
-  }
-
   await cherryPickCommits(prsEligibleForCherryPick, {
     range: { from: "next", to: options.releaseBranch },
     afterCherryPick: async (pr) => {
       await updatePrMilestone(pr.id, milestone.id);
     },
   });
+
   console.log(separator);
   const okToPushBranch = resIsYes(
     await question(`Ok to push ${chalk.magenta(options.releaseBranch)} to ${chalk.magenta(options.remote)}? [Y/n] > `),
@@ -346,15 +363,18 @@ async function publish() {
     // We're using execa here and not zx because zx doesn't handle the prompt for the otp.
     await execaCommand("yarn lerna publish from-package", { stdio: "inherit" });
   } catch {
-    console.log(separator);
-    await question([
-      "✋ Publishing failed. But don't worry! You can usually recover from this by...",
-      "",
-      "1. Getting rid of the changes to the package.json's (lerna will make them again)",
-      "2. In another terminal, running `yarn lerna publish from-package`",
-      "",
-      "Press anything to continue...",
-    ].join("\n"));
+    console.log();
+    consoleBoxen(
+      "✋ Publishing failed",
+      [
+        "But don't worry! You can usually recover from this by...",
+        "",
+        "1. Getting rid of the changes to the package.json's in the Redwood monorepo (lerna will make them again)",
+        `2. In another terminal in the Redwood monorepo, running ${chalk.green("yarn lerna publish from-package")}`,
+      ].join("\n"),
+    );
+    console.log();
+    await question("Press anything to continue > ");
   }
 }
 
@@ -378,10 +398,9 @@ export async function mergeReleaseBranch(options: ReleaseOptions & { releaseBran
     await $`git merge ${options.releaseBranch}`;
   } catch (_error) {
     console.log();
-    console.log(
-      chalk.yellow(
-        "✋ Couldn't cleanly merge the release branch into next. Resolve the conflicts and run `git merge --continue`",
-      ),
+    consoleBoxen(
+      "✋ Couldn't cleanly merge the release branch into next",
+      `Resolve the conflicts and run ${chalk.green("git merge --continue")}`,
     );
     console.log();
     await question("Press anything to continue > ");

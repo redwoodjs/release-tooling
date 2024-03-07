@@ -28,7 +28,7 @@ export async function triageRange(range: Range, { remote }: { remote: string }) 
     });
     await cache.set(key, commits);
   } else {
-    console.log("💾 Using caching at ./triage/lib/cache");
+    console.log("💾 Using cache at ./triage/lib/cache");
   }
 
   console.log(separator);

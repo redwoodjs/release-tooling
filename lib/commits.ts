@@ -4,7 +4,10 @@ import { unwrap } from "./zx_helpers.js";
 
 /** Square brackets (`[` or `]`) in commit messages need to be escaped */
 function sanitizeMessage(message: string) {
-  return message.replace("[", "\\[").replace("]", "\\]");
+  return message
+    .replace("…", "")
+    .replace("[", "\\[")
+    .replace("]", "\\]");
 }
 
 /** See if a commit has been cherry picked into a given ref */

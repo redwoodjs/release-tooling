@@ -1,5 +1,6 @@
 import { gqlGitHub, labelsToIds } from "@lib/github.js";
 import { getPrsFromSearchQuery, milestonesToIds } from "@lib/milestones.js";
+import type { PR } from "@lib/types.js";
 
 async function main() {
   console.log("Getting renovate PRs...");
@@ -23,7 +24,7 @@ async function main() {
 
 await main();
 
-async function getRenovatePrs() {
+async function getRenovatePrs(): Promise<PR[]> {
   const variables = {
     search: "repo:redwoodjs/redwood is:open is:pr author:app/renovate",
   };

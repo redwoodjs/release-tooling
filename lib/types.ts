@@ -27,4 +27,11 @@ export interface PR {
   mergeCommit: {
     messageHeadline: string;
   };
+  mergedAt: string;
+  milestone: {
+    title: string;
+  };
+  author: {
+    login: string;
+  };
 }
