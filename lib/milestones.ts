@@ -98,6 +98,9 @@ const getPrsWithMilestoneQuery = `\
           milestone {
             title
           }
+          author {
+            login
+          }
         }
       }
     }

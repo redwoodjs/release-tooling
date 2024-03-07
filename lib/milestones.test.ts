@@ -22,6 +22,9 @@ describe("getPrsWithMilestone", () => {
     expect(prs).toMatchInlineSnapshot(`
       [
         {
+          "author": {
+            "login": "codisfy",
+          },
           "id": "PR_kwDOC2M2f85nkDDh",
           "mergeCommit": {
             "messageHeadline": "Update MetaTags to be MetaData in Docs (#10053)",
@@ -35,6 +38,9 @@ describe("getPrsWithMilestone", () => {
           "url": "https://github.com/redwoodjs/redwood/pull/10053",
         },
         {
+          "author": {
+            "login": "jtoar",
+          },
           "id": "PR_kwDOC2M2f85nszPR",
           "mergeCommit": {
             "messageHeadline": "fix(render): reduce memory and handle server file  (#10055)",
@@ -48,6 +54,9 @@ describe("getPrsWithMilestone", () => {
           "url": "https://github.com/redwoodjs/redwood/pull/10055",
         },
         {
+          "author": {
+            "login": "jnhooper",
+          },
           "id": "PR_kwDOC2M2f85nyT1x",
           "mergeCommit": {
             "messageHeadline": "Update studio.md (#10062)",
