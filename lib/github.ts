@@ -30,6 +30,7 @@ export const labelsToIds = {
   "release:feature": "LA_kwDOC2M2f87afaQF",
   "release:breaking": "MDU6TGFiZWwyMzE0NzAxNTIx",
 
+  "changesets-ok": "LA_kwDOC2M2f88AAAABjTb7Bw",
   "changelog-ok": "LA_kwDOC2M2f88AAAABh6ePeA",
   "fixture-ok": "LA_kwDOC2M2f88AAAABBKQskg",
 };

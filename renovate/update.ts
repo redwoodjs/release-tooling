@@ -62,7 +62,7 @@ async function updatePr(prId: string) {
     variables: {
       prId,
       milestoneId: milestonesToIds["next-release"],
-      labelIds: [labelsToIds["release:chore"], labelsToIds["changelog-ok"], labelsToIds["fixture-ok"]],
+      labelIds: [labelsToIds["release:chore"], labelsToIds["changesets-ok"], labelsToIds["fixture-ok"]],
     },
   });
 }
