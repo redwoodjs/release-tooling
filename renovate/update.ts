@@ -3,10 +3,10 @@ import { getPrsFromSearchQuery, milestonesToIds } from "@lib/milestones.js";
 import type { PR } from "@lib/types.js";
 
 async function main() {
-  console.log("Getting renovate PRs...");
-  const prs = await getRenovatePrs();
+  console.log("Getting renovate and dependabot PRs...");
+  const prs = await getPrs();
   if (prs.length === 0) {
-    console.log("✨ No renovate PRs");
+    console.log("✨ No renovate or dependabot PRs");
     return;
   }
 
@@ -16,7 +16,7 @@ async function main() {
   console.log();
 
   for (const pr of prs) {
-    console.log(`Updating PR #${pr.number}...`);
+    console.log(`Updating PR "#${pr.title}"...`);
     await updatePr(pr.id);
     console.log("Done");
   }
@@ -24,9 +24,23 @@ async function main() {
 
 await main();
 
+async function getPrs() {
+  const renovatePrs = await getRenovatePrs();
+  const dependabotPrs = await getDependabotPrs();
+  return [...renovatePrs, ...dependabotPrs];
+}
+
 async function getRenovatePrs(): Promise<PR[]> {
   const variables = {
     search: "repo:redwoodjs/redwood is:open is:pr author:app/renovate",
+  };
+  const { data } = await gqlGitHub({ query: getPrsFromSearchQuery, variables });
+  return data.search.nodes;
+}
+
+async function getDependabotPrs(): Promise<PR[]> {
+  const variables = {
+    search: "repo:redwoodjs/redwood is:open is:pr author:app/dependabot",
   };
   const { data } = await gqlGitHub({ query: getPrsFromSearchQuery, variables });
   return data.search.nodes;
