@@ -406,7 +406,7 @@ export async function mergeReleaseBranch(options: ReleaseOptions & { releaseBran
     await question("Press anything to continue > ");
   }
 
-  console.log(separator);
+  logSection("Pushing the next branch");
   const okToPushBranch = resIsYes(
     await question(`Ok to push ${chalk.magenta("next")} to ${chalk.magenta(options.remote)}? [Y/n] > `),
   );
@@ -414,7 +414,7 @@ export async function mergeReleaseBranch(options: ReleaseOptions & { releaseBran
     await pushBranch("next", options.remote);
   }
 
-  console.log(separator);
+  logSection("Deleting the release branch");
   const okToDeleteBranches = resIsYes(await question(`Ok to delete ${chalk.magenta(options.releaseBranch)}? [Y/n] > `));
   if (okToDeleteBranches) {
     await $`git switch main`;
