@@ -50,7 +50,7 @@ export async function pullBranch(branch: string, remote: string) {
 }
 
 export async function pushBranch(branch: string, remote: string) {
-  await $`git push ${remote} ${branch}`;
+  await $`git push -u ${remote} ${branch}`;
 }
 
 export async function getReleaseBranches() {
