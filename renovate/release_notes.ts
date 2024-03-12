@@ -1,10 +1,10 @@
-import { getPrsWithMilestone, getMilestones } from "@lib/milestones.js";
-import { prompts } from '@lib/prompts.js'
-import type { PR } from '@lib/types.js'
+import { getMilestones, getPrsWithMilestone } from "@lib/milestones.js";
+import { prompts } from "@lib/prompts.js";
+import type { PR } from "@lib/types.js";
 
 async function main() {
-  const milestone = await getMilestone()
-  console.log()
+  const milestone = await getMilestone();
+  console.log();
   const prs = await getPrsWithMilestone(milestone);
   const renovatePrs = prs.filter(authorIsRenovate);
   const releaseNotes = renovatePrs.map(getReleaseNotes);
@@ -20,8 +20,8 @@ async function getMilestone() {
     message: "Milestone?",
     type: "select",
     choices: milestones.map((milestone) => ({ title: milestone.title, value: milestone.title })),
-  })
-  return milestone
+  });
+  return milestone;
 }
 
 function authorIsRenovate(pr: PR) {
@@ -44,4 +44,4 @@ function printReleaseNotes(releaseNotes: string[]) {
     "</details>",
     "",
   ].join("\n"));
-} 
+}
