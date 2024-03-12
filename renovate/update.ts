@@ -2,6 +2,8 @@ import { gqlGitHub, labelsToIds } from "@lib/github.js";
 import { getPrsFromSearchQuery, milestonesToIds } from "@lib/milestones.js";
 import type { PR } from "@lib/types.js";
 
+import { fs } from 'zx'
+
 async function main() {
   console.log("Getting renovate and dependabot PRs...");
   const prs = await getPrs();
@@ -27,7 +29,8 @@ await main();
 async function getPrs() {
   const renovatePrs = await getRenovatePrs();
   const dependabotPrs = await getDependabotPrs();
-  return [...renovatePrs, ...dependabotPrs];
+  const ignoreList = await getIgnoreList()
+  return [...renovatePrs, ...dependabotPrs].filter(pr => !ignoreList.includes(pr.number))
 }
 
 async function getRenovatePrs(): Promise<PR[]> {
@@ -65,4 +68,9 @@ async function updatePr(prId: string) {
       labelIds: [labelsToIds["release:chore"], labelsToIds["changesets-ok"], labelsToIds["fixture-ok"]],
     },
   });
+}
+
+async function getIgnoreList() {
+  const ignoreList: PR[] = await fs.readJson(new URL('ignore.json', import.meta.url))
+  return ignoreList.map(pr => pr.number)
 }

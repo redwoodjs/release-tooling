@@ -1,0 +1,10 @@
+[
+  {
+    "title": "fix(deps): update dependency vite to v5",
+    "number": 10167
+  },
+  {
+    "title": "chore(deps): update react monorepo",
+    "number": 10178
+  }
+]
