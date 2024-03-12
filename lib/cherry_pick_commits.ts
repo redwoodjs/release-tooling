@@ -60,7 +60,6 @@ export async function cherryPickCommits(commits: Commit[], {
           "✋ Couldn't cleanly cherry pick",
           [
             `Resolve the conflicts and run ${chalk.green("git cherry-pick --continue")}.`,
-            "",
             chalk.yellow("Don't edit the commit message!"),
           ].join("\n"),
         );
