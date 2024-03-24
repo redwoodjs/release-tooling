@@ -634,10 +634,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@tsconfig/recommended@npm:1.0.3":
-  version: 1.0.3
-  resolution: "@tsconfig/recommended@npm:1.0.3"
-  checksum: 10c0/2744d2798d52d337a7b0b78f6efa070ecda4e42262e93589d4bed615a55639a84035a8e3b2b020f2396f1f7832294b8c00d7acc78e644418566447ca53df9078
+"@tsconfig/recommended@npm:1.0.4":
+  version: 1.0.4
+  resolution: "@tsconfig/recommended@npm:1.0.4"
+  checksum: 10c0/81304013565b64c100ad4c297908c6eba7808c109450f1190a2f4d5d87057ae0742cbb1d7fd571520b70e321b8de6bfe394be0a7653f4a88e23d77d64bc59e77
   languageName: node
   linkType: hard
 
@@ -2999,7 +2999,7 @@ __metadata:
   resolution: "root-workspace-0b6124@workspace:."
   dependencies:
     "@eslint/js": "npm:8.57.0"
-    "@tsconfig/recommended": "npm:1.0.3"
+    "@tsconfig/recommended": "npm:1.0.4"
     "@types/eslint": "npm:8.56.6"
     "@types/eslint__js": "npm:8.42.3"
     "@types/prompts": "npm:2.4.9"

@@ -27,7 +27,7 @@ const RAW_RUNTIME_STATE =
         "packageLocation": "./",\
         "packageDependencies": [\
           ["@eslint/js", "npm:8.57.0"],\
-          ["@tsconfig/recommended", "npm:1.0.3"],\
+          ["@tsconfig/recommended", "npm:1.0.4"],\
           ["@types/eslint", "npm:8.56.6"],\
           ["@types/eslint__js", "npm:8.42.3"],\
           ["@types/prompts", "npm:2.4.9"],\
@@ -827,10 +827,10 @@ const RAW_RUNTIME_STATE =
       }]\
     ]],\
     ["@tsconfig/recommended", [\
-      ["npm:1.0.3", {\
-        "packageLocation": "./.yarn/cache/@tsconfig-recommended-npm-1.0.3-88ff3c0eb0-2744d2798d.zip/node_modules/@tsconfig/recommended/",\
+      ["npm:1.0.4", {\
+        "packageLocation": "./.yarn/cache/@tsconfig-recommended-npm-1.0.4-2161055a5e-8130401356.zip/node_modules/@tsconfig/recommended/",\
         "packageDependencies": [\
-          ["@tsconfig/recommended", "npm:1.0.3"]\
+          ["@tsconfig/recommended", "npm:1.0.4"]\
         ],\
         "linkType": "HARD"\
       }]\
@@ -3414,7 +3414,7 @@ const RAW_RUNTIME_STATE =
         "packageDependencies": [\
           ["root-workspace-0b6124", "workspace:."],\
           ["@eslint/js", "npm:8.57.0"],\
-          ["@tsconfig/recommended", "npm:1.0.3"],\
+          ["@tsconfig/recommended", "npm:1.0.4"],\
           ["@types/eslint", "npm:8.56.6"],\
           ["@types/eslint__js", "npm:8.42.3"],\
           ["@types/prompts", "npm:2.4.9"],\
