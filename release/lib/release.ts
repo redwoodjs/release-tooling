@@ -4,7 +4,7 @@ import { $, cd, chalk, fs, path, question } from "zx";
 
 import { branchExists, pushBranch } from "@lib/branches.js";
 import { cherryPickCommits, reportCommitsEligibleForCherryPick } from "@lib/cherry_pick_commits.js";
-import { commitIsInRef, getCommitHash } from "@lib/commits.js";
+import { commitIsInRef, getCommitHash, sanitizeMessage } from "@lib/commits.js";
 import { consoleBoxen, logSection, separator } from "@lib/console_helpers.js";
 import { CustomError } from "@lib/custom_error.js";
 import { logs } from "@lib/logs.js";
@@ -217,7 +217,7 @@ async function updateReleaseBranch(options: ReleaseOptions & { releaseBranch: st
 
     if (!await commitIsInRef(options.releaseBranch, pr.line)) {
       shouldCherryPick = true;
-      const line = unwrap(await $`git log next --oneline --no-abbrev-commit --grep ${pr.line}`);
+      const line = unwrap(await $`git log next --oneline --no-abbrev-commit --grep ${sanitizeMessage(pr.line)}`);
 
       if (line === "") {
         console.log();

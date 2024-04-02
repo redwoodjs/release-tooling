@@ -3,7 +3,7 @@ import { $ } from "zx";
 import { unwrap } from "./zx_helpers.js";
 
 /** Square brackets (`[` or `]`) in commit messages need to be escaped */
-function sanitizeMessage(message: string) {
+export function sanitizeMessage(message: string) {
   return message
     .replace("…", "")
     .replace("[", "\\[")
