@@ -39,7 +39,7 @@ const RAW_RUNTIME_STATE =
           ["execa", "npm:8.0.1"],\
           ["prompts", "npm:2.4.2"],\
           ["semver", "npm:7.6.0"],\
-          ["tsx", "npm:4.7.1"],\
+          ["tsx", "npm:4.7.2"],\
           ["typescript", "patch:typescript@npm%3A5.4.3#optional!builtin<compat/typescript>::version=5.4.3&hash=5adc0c"],\
           ["typescript-eslint", "virtual:dc3fc578bfa5e06182a4d2be39ede0bc5b74940b1ffe0d70c26892ab140a4699787750fba175dc306292e80b4aa2c8c5f68c2a821e69b2c37e360c0dff36ff66#npm:7.5.0"],\
           ["vite", "virtual:dc3fc578bfa5e06182a4d2be39ede0bc5b74940b1ffe0d70c26892ab140a4699787750fba175dc306292e80b4aa2c8c5f68c2a821e69b2c37e360c0dff36ff66#npm:5.2.8"],\
@@ -3426,7 +3426,7 @@ const RAW_RUNTIME_STATE =
           ["execa", "npm:8.0.1"],\
           ["prompts", "npm:2.4.2"],\
           ["semver", "npm:7.6.0"],\
-          ["tsx", "npm:4.7.1"],\
+          ["tsx", "npm:4.7.2"],\
           ["typescript", "patch:typescript@npm%3A5.4.3#optional!builtin<compat/typescript>::version=5.4.3&hash=5adc0c"],\
           ["typescript-eslint", "virtual:dc3fc578bfa5e06182a4d2be39ede0bc5b74940b1ffe0d70c26892ab140a4699787750fba175dc306292e80b4aa2c8c5f68c2a821e69b2c37e360c0dff36ff66#npm:7.5.0"],\
           ["vite", "virtual:dc3fc578bfa5e06182a4d2be39ede0bc5b74940b1ffe0d70c26892ab140a4699787750fba175dc306292e80b4aa2c8c5f68c2a821e69b2c37e360c0dff36ff66#npm:5.2.8"],\
@@ -3823,10 +3823,10 @@ const RAW_RUNTIME_STATE =
       }]\
     ]],\
     ["tsx", [\
-      ["npm:4.7.1", {\
-        "packageLocation": "./.yarn/cache/tsx-npm-4.7.1-2110587134-5711bec946.zip/node_modules/tsx/",\
+      ["npm:4.7.2", {\
+        "packageLocation": "./.yarn/cache/tsx-npm-4.7.2-1b4d572ec8-0338598cc3.zip/node_modules/tsx/",\
         "packageDependencies": [\
-          ["tsx", "npm:4.7.1"],\
+          ["tsx", "npm:4.7.2"],\
           ["esbuild", "npm:0.19.12"],\
           ["fsevents", "patch:fsevents@npm%3A2.3.3#optional!builtin<compat/fsevents>::version=2.3.3&hash=df0bf1"],\
           ["get-tsconfig", "npm:4.7.2"]\
