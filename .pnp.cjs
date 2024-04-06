@@ -26,7 +26,7 @@ const RAW_RUNTIME_STATE =
       [null, {\
         "packageLocation": "./",\
         "packageDependencies": [\
-          ["@eslint/js", "npm:8.57.0"],\
+          ["@eslint/js", "npm:9.0.0"],\
           ["@tsconfig/recommended", "npm:1.0.5"],\
           ["@types/eslint", "npm:8.56.7"],\
           ["@types/eslint__js", "npm:8.42.3"],\
@@ -559,6 +559,13 @@ const RAW_RUNTIME_STATE =
         "packageLocation": "./.yarn/cache/@eslint-js-npm-8.57.0-00ead3710a-9a518bb862.zip/node_modules/@eslint/js/",\
         "packageDependencies": [\
           ["@eslint/js", "npm:8.57.0"]\
+        ],\
+        "linkType": "HARD"\
+      }],\
+      ["npm:9.0.0", {\
+        "packageLocation": "./.yarn/cache/@eslint-js-npm-9.0.0-5e980024c8-ec3242a60a.zip/node_modules/@eslint/js/",\
+        "packageDependencies": [\
+          ["@eslint/js", "npm:9.0.0"]\
         ],\
         "linkType": "HARD"\
       }]\
@@ -3413,7 +3420,7 @@ const RAW_RUNTIME_STATE =
         "packageLocation": "./",\
         "packageDependencies": [\
           ["root-workspace-0b6124", "workspace:."],\
-          ["@eslint/js", "npm:8.57.0"],\
+          ["@eslint/js", "npm:9.0.0"],\
           ["@tsconfig/recommended", "npm:1.0.5"],\
           ["@types/eslint", "npm:8.56.7"],\
           ["@types/eslint__js", "npm:8.42.3"],\
