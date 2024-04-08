@@ -693,7 +693,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/node@npm:*, @types/node@npm:>=20.12.4":
+"@types/node@npm:*, @types/node@npm:>=20.12.5":
   version: 20.12.5
   resolution: "@types/node@npm:20.12.5"
   dependencies:
@@ -2753,7 +2753,7 @@ __metadata:
     vite: "npm:5.2.8"
     vite-tsconfig-paths: "npm:4.3.2"
     vitest: "npm:1.4.0"
-    zx: "npm:8.0.0"
+    zx: "npm:8.0.1"
   languageName: unknown
   linkType: soft
 
@@ -3355,12 +3355,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"zx@npm:8.0.0":
-  version: 8.0.0
-  resolution: "zx@npm:8.0.0"
+"zx@npm:8.0.1":
+  version: 8.0.1
+  resolution: "zx@npm:8.0.1"
   dependencies:
     "@types/fs-extra": "npm:^11.0.4"
-    "@types/node": "npm:>=20.12.4"
+    "@types/node": "npm:>=20.12.5"
   dependenciesMeta:
     "@types/fs-extra":
       optional: true
@@ -3368,6 +3368,6 @@ __metadata:
       optional: true
   bin:
     zx: build/cli.js
-  checksum: 10c0/a3a14f0f2f9cbc7d1cc965cd326acd442e1705076476a8850853926d4836c2c933de108fa2e53eda73636baf656d6a5b9a2a85ad4aeaf6258ceaf728da533447
+  checksum: 10c0/1265b4b5da1a609ff87eb6cbdd477d6dc22b305c8c950730daad550a93214633545dc135b7668efdb4c40c2fbeb7e6a878d0583e3f735e76d4ef78af1c1a865f
   languageName: node
   linkType: hard
