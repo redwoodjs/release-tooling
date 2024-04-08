@@ -45,7 +45,7 @@ const RAW_RUNTIME_STATE =
           ["vite", "virtual:dc3fc578bfa5e06182a4d2be39ede0bc5b74940b1ffe0d70c26892ab140a4699787750fba175dc306292e80b4aa2c8c5f68c2a821e69b2c37e360c0dff36ff66#npm:5.2.8"],\
           ["vite-tsconfig-paths", "virtual:dc3fc578bfa5e06182a4d2be39ede0bc5b74940b1ffe0d70c26892ab140a4699787750fba175dc306292e80b4aa2c8c5f68c2a821e69b2c37e360c0dff36ff66#npm:4.3.2"],\
           ["vitest", "virtual:dc3fc578bfa5e06182a4d2be39ede0bc5b74940b1ffe0d70c26892ab140a4699787750fba175dc306292e80b4aa2c8c5f68c2a821e69b2c37e360c0dff36ff66#npm:1.4.0"],\
-          ["zx", "npm:8.0.0"]\
+          ["zx", "npm:8.0.1"]\
         ],\
         "linkType": "SOFT"\
       }]\
@@ -3141,7 +3141,7 @@ const RAW_RUNTIME_STATE =
           ["vite", "virtual:dc3fc578bfa5e06182a4d2be39ede0bc5b74940b1ffe0d70c26892ab140a4699787750fba175dc306292e80b4aa2c8c5f68c2a821e69b2c37e360c0dff36ff66#npm:5.2.8"],\
           ["vite-tsconfig-paths", "virtual:dc3fc578bfa5e06182a4d2be39ede0bc5b74940b1ffe0d70c26892ab140a4699787750fba175dc306292e80b4aa2c8c5f68c2a821e69b2c37e360c0dff36ff66#npm:4.3.2"],\
           ["vitest", "virtual:dc3fc578bfa5e06182a4d2be39ede0bc5b74940b1ffe0d70c26892ab140a4699787750fba175dc306292e80b4aa2c8c5f68c2a821e69b2c37e360c0dff36ff66#npm:1.4.0"],\
-          ["zx", "npm:8.0.0"]\
+          ["zx", "npm:8.0.1"]\
         ],\
         "linkType": "SOFT"\
       }]\
@@ -3855,10 +3855,10 @@ const RAW_RUNTIME_STATE =
       }]\
     ]],\
     ["zx", [\
-      ["npm:8.0.0", {\
-        "packageLocation": "./.yarn/cache/zx-npm-8.0.0-3928ebd852-a3a14f0f2f.zip/node_modules/zx/",\
+      ["npm:8.0.1", {\
+        "packageLocation": "./.yarn/cache/zx-npm-8.0.1-b3f9085b01-1265b4b5da.zip/node_modules/zx/",\
         "packageDependencies": [\
-          ["zx", "npm:8.0.0"],\
+          ["zx", "npm:8.0.1"],\
           ["@types/fs-extra", "npm:11.0.4"],\
           ["@types/node", "npm:20.12.5"]\
         ],\
