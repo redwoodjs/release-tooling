@@ -117,7 +117,7 @@ export function commitIsEligibleForCherryPick(commit: Commit, { range }: { range
   if (commit.notes) {
     return false;
   }
-  if (commit.milestone === "SSR" || commit.milestone === "RSC") {
+  if (commit.milestone === "SSR" || commit.milestone === "RSC" || commit.milestone === "next-release-major") {
     return false;
   }
 

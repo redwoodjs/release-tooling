@@ -140,7 +140,10 @@ export function getPrettyLine(commit: Commit, { range }: { range: Range }) {
     return colors.wasCherryPickedWithChanges(commit.line);
   }
 
-  if (!!commit.notes || commit.milestone === "SSR" || commit.milestone === "RSC") {
+  if (
+    !!commit.notes || commit.milestone === "SSR" || commit.milestone === "RSC"
+    || commit.milestone === "next-release-major"
+  ) {
     return colors.shouldntBeCherryPicked(commit.line);
   }
 
