@@ -9,7 +9,7 @@ export default tseslint.config(
   {
     ignores: [
       ".yarn/*",
-      ".pnp.loader.mjs",
+      ".pnp.*",
     ],
   },
   {
