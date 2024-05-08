@@ -72,7 +72,9 @@ export const cache = {
       toHash,
     ].join("_");
 
-    return cacheKey;
+    // The cache key must be a valid file name so here we replace potentially invalid characters
+    // with underscores 
+    return cacheKey.replace(/[^a-zA-Z0-9_]/g, "_");
   },
 
   async has(key: string) {
