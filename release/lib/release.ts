@@ -175,10 +175,9 @@ async function switchToReleaseBranch(
 
     const ok = resIsYes(
       await question(
-        `Ok to checkout a ${chalk.underline("new")} release branch, ${
-          chalk.magenta(
-            releaseBranch,
-          )
+        `Ok to checkout a ${chalk.underline("new")} release branch, ${chalk.magenta(
+          releaseBranch,
+        )
         }, from ${chalk.magenta(checkoutFromRef)}? [Y/n] > `,
       ),
     );
@@ -299,6 +298,9 @@ async function updatePackageVersions({ nextRelease }: Pick<ReleaseOptions, "next
   // As far as I can tell, `lerna version` doesn't update peer dependencies,
   // so we need to do that manually. See https://github.com/lerna/lerna/issues/1575.
   await updateRedwoodJsDependencyVersions("packages/api-server/package.json", lernaVersion);
+  await updateRedwoodJsDependencyVersions("packages/storybook/package.json", lernaVersion);
+  await updateRedwoodJsDependencyVersions("packages/cli-packages/storybook-vite/package.json", lernaVersion);
+
   await $`yarn install`;
   await $`yarn dedupe`;
   await $`git add .`;
@@ -336,7 +338,7 @@ async function updateRedwoodJsDependencyVersions(packageConfigPath: string, vers
   fs.writeJson(packageConfigPath, packageConfig, { spaces: 2 });
 }
 
-const isRedwoodJsPackage = (pkg: string) => pkg.startsWith("@redwoodjs/");
+const isRedwoodJsPackage = (pkg: string) => pkg.startsWith("@redwoodjs/") || pkg.startsWith("storybook-framework-redwoodjs-vite");
 
 async function removeCreateRedwoodAppFromWorkspaces() {
   const frameworkPackageConfig = await fs.readJson("./package.json");
