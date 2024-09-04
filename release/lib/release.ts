@@ -99,7 +99,7 @@ export async function release(options: ReleaseOptions) {
   logSection("Build, lint, test");
   await question("Press anything to run build, lint, and test > ");
   await $`yarn build`;
-  await $`yarn lint`;
+  await $`yarn lint:fw`;
   await $`yarn test`;
 
   logSection("Publishing to NPM");
