@@ -3,7 +3,10 @@ import semver from "semver";
 import { $, cd, chalk, fs, path, question } from "zx";
 
 import { branchExists, pushBranch } from "@lib/branches.js";
-import { cherryPickCommits, reportCommitsEligibleForCherryPick } from "@lib/cherry_pick_commits.js";
+import {
+  cherryPickCommits,
+  reportCommitsEligibleForCherryPick,
+} from "@lib/cherry_pick_commits.js";
 import { commitIsInRef, getCommitHash, sanitizeMessage } from "@lib/commits.js";
 import { consoleBoxen, logSection, separator } from "@lib/console_helpers.js";
 import { CustomError } from "@lib/custom_error.js";
@@ -26,9 +29,11 @@ export async function assertLoggedInToNpm() {
     await $`npm whoami`;
     console.log("🔑 Logged in to NPM");
   } catch (error) {
-    throw new CustomError([
-      `You're Not logged in to NPM. Log in with ${chalk.magenta("npm login")}`,
-    ].join("\n"));
+    throw new CustomError(
+      [
+        `You're Not logged in to NPM. Log in with ${chalk.magenta("npm login")}`,
+      ].join("\n"),
+    );
   }
 }
 
@@ -47,9 +52,10 @@ export async function getLatestReleaseOrThrow() {
   return latestRelease;
 }
 
-export async function getNextReleaseOrThrow(
-  { latestRelease, desiredSemver }: Pick<ReleaseOptions, "latestRelease" | "desiredSemver">,
-) {
+export async function getNextReleaseOrThrow({
+  latestRelease,
+  desiredSemver,
+}: Pick<ReleaseOptions, "latestRelease" | "desiredSemver">) {
   const nextRelease = `v${semver.inc(latestRelease, desiredSemver)}`;
   const ok = resIsYes(
     await question(
@@ -66,7 +72,9 @@ export async function getNextReleaseOrThrow(
  * If the git tag for the desired semver already exists, this script was run before, but not to completion.
  * The git tag is one of the last steps, so we need to delete it first.
  */
-export async function assertGitTagDoesntExist({ nextRelease }: Pick<ReleaseOptions, "nextRelease">) {
+export async function assertGitTagDoesntExist({
+  nextRelease,
+}: Pick<ReleaseOptions, "nextRelease">) {
   const gitTagAlreadyExists = unwrap(await $`git tag -l ${nextRelease}`);
   if (gitTagAlreadyExists) {
     throw new CustomError("The git tag already exists");
@@ -75,23 +83,30 @@ export async function assertGitTagDoesntExist({ nextRelease }: Pick<ReleaseOptio
 
 export async function release(options: ReleaseOptions) {
   logSection("Switching to the release branch");
-  const releaseBranch = ["release", options.desiredSemver, options.nextRelease].join("/");
+  const releaseBranch = [
+    "release",
+    options.desiredSemver,
+    options.nextRelease,
+  ].join("/");
   await switchToReleaseBranch({ ...options, releaseBranch });
 
   logSection("Seeing if the release branch needs updated based on milestones");
   await updateReleaseBranch({ ...options, releaseBranch });
 
   logSection("Versioning or re-versioning the docs if necessary");
-  const message = options.desiredSemver === "patch"
-    ? `Ok to ${chalk.underline("reversion")} ${chalk.magenta(options.nextRelease)} docs? [Y/n] > `
-    : `Ok to ${chalk.underline("version")} docs to ${chalk.magenta(options.nextRelease)}? [Y/n] > `;
+  const message =
+    options.desiredSemver === "patch"
+      ? `Ok to ${chalk.underline("reversion")} ${chalk.magenta(options.nextRelease)} docs? [Y/n] > `
+      : `Ok to ${chalk.underline("version")} docs to ${chalk.magenta(options.nextRelease)}? [Y/n] > `;
   const okToVersionDocs = resIsYes(await question(message));
   if (okToVersionDocs) {
     await versionDocs(options.nextRelease);
   }
 
   logSection("Cleaning, installing, and updating package versions");
-  await question("Press anything to clean, install, and update package versions > ");
+  await question(
+    "Press anything to clean, install, and update package versions > ",
+  );
   await $`git clean -fxd`;
   await $`yarn install`;
   await updatePackageVersions(options);
@@ -108,7 +123,8 @@ export async function release(options: ReleaseOptions) {
     throw new CustomError("See you later!", "👋");
   }
   // Temporarily remove `packages/create-redwood-app` from the workspaces field so that we can publish it separately later.
-  const undoRemoveCreateRedwoodAppFromWorkspaces = await removeCreateRedwoodAppFromWorkspaces();
+  const undoRemoveCreateRedwoodAppFromWorkspaces =
+    await removeCreateRedwoodAppFromWorkspaces();
   await publish();
   // Undo the temporary commit and publish CRWA.
   logSection("Updating create-redwood-app templates and publishing to NPM");
@@ -131,7 +147,9 @@ export async function release(options: ReleaseOptions) {
   await $`git push -u ${options.remote} ${releaseBranch} --follow-tags`;
 
   logSection("Closing the milestone, and merging the release branch into next");
-  await question(`Press anything to close the ${chalk.magenta(options.nextRelease)} milestone > `);
+  await question(
+    `Press anything to close the ${chalk.magenta(options.nextRelease)} milestone > `,
+  );
   try {
     await closeMilestone(options.nextRelease);
   } catch (error) {
@@ -143,13 +161,16 @@ export async function release(options: ReleaseOptions) {
   }
 
   logSection("Merging the release branch into next");
-  await question(`Press anything to merge ${chalk.magenta(releaseBranch)} into ${chalk.magenta("next")} > `);
+  await question(
+    `Press anything to merge ${chalk.magenta(releaseBranch)} into ${chalk.magenta("next")} > `,
+  );
   await mergeReleaseBranch({ ...options, releaseBranch });
 }
 
-async function switchToReleaseBranch(
-  { releaseBranch, latestRelease }: Pick<ReleaseOptions, "latestRelease"> & { releaseBranch: string },
-) {
+async function switchToReleaseBranch({
+  releaseBranch,
+  latestRelease,
+}: Pick<ReleaseOptions, "latestRelease"> & { releaseBranch: string }) {
   const releaseBranchExists = await branchExists(releaseBranch);
 
   if (releaseBranchExists) {
@@ -177,8 +198,7 @@ async function switchToReleaseBranch(
       await question(
         `Ok to checkout a ${chalk.underline("new")} release branch, ${chalk.magenta(
           releaseBranch,
-        )
-        }, from ${chalk.magenta(checkoutFromRef)}? [Y/n] > `,
+        )}, from ${chalk.magenta(checkoutFromRef)}? [Y/n] > `,
       ),
     );
     if (!ok) {
@@ -189,7 +209,9 @@ async function switchToReleaseBranch(
   }
 }
 
-async function updateReleaseBranch(options: ReleaseOptions & { releaseBranch: string }) {
+async function updateReleaseBranch(
+  options: ReleaseOptions & { releaseBranch: string },
+) {
   const prs = await getPrsWithMilestone(options.nextRelease);
   const nextReleasePatchPrs = await getPrsWithMilestone("next-release-patch");
   prs.push(...nextReleasePatchPrs);
@@ -214,19 +236,23 @@ async function updateReleaseBranch(options: ReleaseOptions & { releaseBranch: st
   for (const pr of prs) {
     pr.line = pr.mergeCommit.messageHeadline;
 
-    if (!await commitIsInRef(options.releaseBranch, pr.line)) {
+    if (!(await commitIsInRef(options.releaseBranch, pr.line))) {
       shouldCherryPick = true;
-      const line = unwrap(await $`git log next --oneline --no-abbrev-commit --grep ${sanitizeMessage(pr.line)}`);
+      const line = unwrap(
+        await $`git log next --oneline --no-abbrev-commit --grep ${sanitizeMessage(pr.line)}`,
+      );
 
       if (line === "") {
         console.log();
-        throw new CustomError([
-          "Couldn't find the commit for",
-          "",
-          `  ${pr.line}`,
-          "",
-          `in the ${chalk.magenta("next")} branch. Have you triaged?`,
-        ].join("\n"));
+        throw new CustomError(
+          [
+            "Couldn't find the commit for",
+            "",
+            `  ${pr.line}`,
+            "",
+            `in the ${chalk.magenta("next")} branch. Have you triaged?`,
+          ].join("\n"),
+        );
       }
 
       pr.hash = await getCommitHash(line);
@@ -254,7 +280,9 @@ async function updateReleaseBranch(options: ReleaseOptions & { releaseBranch: st
 
   console.log(separator);
   const okToPushBranch = resIsYes(
-    await question(`Ok to push ${chalk.magenta(options.releaseBranch)} to ${chalk.magenta(options.remote)}? [Y/n] > `),
+    await question(
+      `Ok to push ${chalk.magenta(options.releaseBranch)} to ${chalk.magenta(options.remote)}? [Y/n] > `,
+    ),
   );
   if (okToPushBranch) {
     await pushBranch(options.releaseBranch, options.remote);
@@ -289,7 +317,9 @@ async function versionDocs(nextRelease: string) {
   await cd("../");
 }
 
-async function updatePackageVersions({ nextRelease }: Pick<ReleaseOptions, "nextRelease">) {
+async function updatePackageVersions({
+  nextRelease,
+}: Pick<ReleaseOptions, "nextRelease">) {
   const lernaVersion = nextRelease.replace("v", "");
   // TODO(jtoar): Is this missing a peer dep?
   // See docs on these options at https://github.com/lerna/lerna/tree/main/libs/commands/version#options.
@@ -297,24 +327,40 @@ async function updatePackageVersions({ nextRelease }: Pick<ReleaseOptions, "next
 
   // As far as I can tell, `lerna version` doesn't update peer dependencies,
   // so we need to do that manually. See https://github.com/lerna/lerna/issues/1575.
-  await updateRedwoodJsDependencyVersions("packages/api-server/package.json", lernaVersion);
-  await updateRedwoodJsDependencyVersions("packages/storybook/package.json", lernaVersion);
-  await updateRedwoodJsDependencyVersions("packages/cli-packages/storybook-vite/package.json", lernaVersion);
+  await updateRedwoodJsDependencyVersions(
+    "packages/api-server/package.json",
+    lernaVersion,
+  );
+  await updateRedwoodJsDependencyVersions(
+    "packages/storybook/package.json",
+    lernaVersion,
+  );
+  await updateRedwoodJsDependencyVersions(
+    "packages/cli-packages/storybook-vite/package.json",
+    lernaVersion,
+  );
 
   await $`yarn install`;
   await $`yarn dedupe`;
   await $`git add .`;
 
-  for (
-    const templatePath of [
-      "packages/create-redwood-app/templates/ts",
-      "packages/create-redwood-app/templates/js",
-      "__fixtures__/test-project",
-    ]
-  ) {
-    await updateRedwoodJsDependencyVersions(path.join(templatePath, "package.json"), lernaVersion);
-    await updateRedwoodJsDependencyVersions(path.join(templatePath, "api", "package.json"), lernaVersion);
-    await updateRedwoodJsDependencyVersions(path.join(templatePath, "web", "package.json"), lernaVersion);
+  for (const templatePath of [
+    "packages/create-redwood-app/templates/ts",
+    "packages/create-redwood-app/templates/js",
+    "__fixtures__/test-project",
+  ]) {
+    await updateRedwoodJsDependencyVersions(
+      path.join(templatePath, "package.json"),
+      lernaVersion,
+    );
+    await updateRedwoodJsDependencyVersions(
+      path.join(templatePath, "api", "package.json"),
+      lernaVersion,
+    );
+    await updateRedwoodJsDependencyVersions(
+      path.join(templatePath, "web", "package.json"),
+      lernaVersion,
+    );
   }
 
   await $`yarn install`;
@@ -322,23 +368,34 @@ async function updatePackageVersions({ nextRelease }: Pick<ReleaseOptions, "next
 }
 
 /** Iterates over `@redwoodjs/*` dependencies in a package.json and updates their version */
-async function updateRedwoodJsDependencyVersions(packageConfigPath: string, version: string) {
+async function updateRedwoodJsDependencyVersions(
+  packageConfigPath: string,
+  version: string,
+) {
   const packageConfig = await fs.readJson(packageConfigPath);
 
-  for (const dep of Object.keys(packageConfig.dependencies ?? {}).filter(isRedwoodJsPackage)) {
+  for (const dep of Object.keys(packageConfig.dependencies ?? {}).filter(
+    isRedwoodJsPackage,
+  )) {
     packageConfig.dependencies[dep] = version;
   }
-  for (const dep of Object.keys(packageConfig.devDependencies ?? {}).filter(isRedwoodJsPackage)) {
+  for (const dep of Object.keys(packageConfig.devDependencies ?? {}).filter(
+    isRedwoodJsPackage,
+  )) {
     packageConfig.devDependencies[dep] = version;
   }
-  for (const dep of Object.keys(packageConfig.peerDependencies ?? {}).filter(isRedwoodJsPackage)) {
+  for (const dep of Object.keys(packageConfig.peerDependencies ?? {}).filter(
+    isRedwoodJsPackage,
+  )) {
     packageConfig.peerDependencies[dep] = version;
   }
 
   fs.writeJson(packageConfigPath, packageConfig, { spaces: 2 });
 }
 
-const isRedwoodJsPackage = (pkg: string) => pkg.startsWith("@redwoodjs/") || pkg.startsWith("storybook-framework-redwoodjs-vite");
+const isRedwoodJsPackage = (pkg: string) =>
+  pkg.startsWith("@redwoodjs/") ||
+  pkg.startsWith("storybook-framework-redwoodjs-vite");
 
 async function removeCreateRedwoodAppFromWorkspaces() {
   const frameworkPackageConfig = await fs.readJson("./package.json");
@@ -393,7 +450,9 @@ async function updateCreateRedwoodAppTemplates() {
   cd(originalCwd);
 }
 
-export async function mergeReleaseBranch(options: ReleaseOptions & { releaseBranch: string }) {
+export async function mergeReleaseBranch(
+  options: ReleaseOptions & { releaseBranch: string },
+) {
   await $`git switch next`;
 
   try {
@@ -410,14 +469,20 @@ export async function mergeReleaseBranch(options: ReleaseOptions & { releaseBran
 
   logSection("Pushing the next branch");
   const okToPushBranch = resIsYes(
-    await question(`Ok to push ${chalk.magenta("next")} to ${chalk.magenta(options.remote)}? [Y/n] > `),
+    await question(
+      `Ok to push ${chalk.magenta("next")} to ${chalk.magenta(options.remote)}? [Y/n] > `,
+    ),
   );
   if (okToPushBranch) {
     await pushBranch("next", options.remote);
   }
 
   logSection("Deleting the release branch");
-  const okToDeleteBranches = resIsYes(await question(`Ok to delete ${chalk.magenta(options.releaseBranch)}? [Y/n] > `));
+  const okToDeleteBranches = resIsYes(
+    await question(
+      `Ok to delete ${chalk.magenta(options.releaseBranch)}? [Y/n] > `,
+    ),
+  );
   if (okToDeleteBranches) {
     await $`git switch main`;
     await $`git branch -d ${options.releaseBranch}`;
