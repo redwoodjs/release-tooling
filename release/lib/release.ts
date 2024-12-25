@@ -117,7 +117,7 @@ export async function release(options: ReleaseOptions) {
   await $`yarn lint:fw`;
   await $`yarn test`;
 
-  logSection("Publishing to NPM");
+  logSection("Publishing to NPM. Get ready to enter your NPM OTP");
   const ok = resIsYes(await question(`Ok to publish to NPM? [Y/n] > `));
   if (!ok) {
     throw new CustomError("See you later!", "👋");
@@ -428,12 +428,14 @@ async function publish() {
       [
         "But don't worry! You can usually recover from this by...",
         "",
-        "1. Getting rid of the changes to the package.json's in the Redwood monorepo (lerna will make them again)",
+        "1. Getting rid of the changes to the `package.json`s in the Redwood monorepo (lerna will make them again)",
         `2. In another terminal in the Redwood monorepo, running ${chalk.green("yarn lerna publish from-package")}`,
       ].join("\n"),
     );
     console.log();
-    await question("Press anything to continue > ");
+    await question(
+      "When you've finished the steps above, press anything to continue > ",
+    );
   }
 }
 
