@@ -10,6 +10,7 @@
     "test": "vitest run",
     "release": "tsx ./release/run.ts",
     "triage": "tsx ./triage/run.ts",
+    "release-notes": "tsx ./release_notes/run.ts",
     "renovate-open": "tsx ./renovate/open.ts",
     "renovate-release-notes": "tsx ./renovate/release_notes.ts",
     "renovate-update": "tsx ./renovate/update.ts",

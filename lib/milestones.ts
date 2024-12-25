@@ -20,7 +20,10 @@ export async function getPrMilestone(prUrl: string) {
 }
 
 export async function getPrMilestoneInternal(prUrl: string) {
-  const { data } = await gqlGitHub({ query: getPrMilestoneQuery, variables: { prUrl } });
+  const { data } = await gqlGitHub({
+    query: getPrMilestoneQuery,
+    variables: { prUrl },
+  });
   return data.resource.milestone.title;
 }
 
@@ -34,8 +37,10 @@ async function setUpCache() {
     fs.writeJsonSync(cacheFilePath, Object.fromEntries(cache), { spaces: 2 });
   });
 
-  const cacheFilePath = fileURLToPath(new URL("pr_milestone_cache.json", import.meta.url));
-  if (!await fs.pathExists(cacheFilePath)) {
+  const cacheFilePath = fileURLToPath(
+    new URL("pr_milestone_cache.json", import.meta.url),
+  );
+  if (!(await fs.pathExists(cacheFilePath))) {
     return new Map<string, string>();
   }
 
@@ -56,18 +61,17 @@ const getPrMilestoneQuery = `\
 `;
 
 export async function getPrsWithMilestone(milestone?: string): Promise<PR[]> {
-  const search = [
-    "repo:redwoodjs/redwood",
-    "is:pr",
-    "is:merged",
-  ];
+  const search = ["repo:redwoodjs/redwood", "is:pr", "is:merged"];
   if (!milestone) {
     search.push("no:milestone");
   } else {
     search.push(`milestone:${milestone}`);
   }
 
-  const res = await gqlGitHub({ query: getPrsFromSearchQuery, variables: { search: search.join(" ") } });
+  const res = await gqlGitHub({
+    query: getPrsFromSearchQuery,
+    variables: { search: search.join(" ") },
+  });
   const prs = res.data.search.nodes;
   prs.sort(sortPrsByMergedAt);
 
@@ -117,10 +121,12 @@ export async function assertNoNoMilestonePrs() {
   const noMilestonePrs = await getPrsWithMilestone();
 
   if (noMilestonePrs.length > 0) {
-    throw new CustomError([
-      `Some PRs have been merged without a milestone`,
-      ...noMilestonePrs.map((pr) => `• ${pr.url}`),
-    ].join("\n"));
+    throw new CustomError(
+      [
+        `Some PRs have been merged without a milestone`,
+        ...noMilestonePrs.map((pr) => `• ${pr.url}`),
+      ].join("\n"),
+    );
   }
 }
 
@@ -144,11 +150,14 @@ const updatePrMilestoneMutation = `\
 
 export async function createMilestone(title: string) {
   const headers = await getGitHubFetchHeaders();
-  const res = await fetch(`https://api.github.com/repos/redwoodjs/redwood/milestones`, {
-    method: "POST",
-    headers,
-    body: JSON.stringify({ title }),
-  });
+  const res = await fetch(
+    `https://api.github.com/repos/redwoodjs/redwood/milestones`,
+    {
+      method: "POST",
+      headers,
+      body: JSON.stringify({ title }),
+    },
+  );
   const json = await res.json();
   return {
     id: json.node_id,
@@ -174,14 +183,22 @@ export async function closeMilestone(title: string) {
 }
 
 export async function getMilestones() {
-  const res = await gqlGitHub({ query: getMilestonesQuery });
+  const res = await gqlGitHub({ query: generateGetMilestonesQuery(["OPEN"]) });
   return res.data.repository.milestones.nodes;
 }
 
-const getMilestonesQuery = `\
+export async function getAllMilestones() {
+  const res = await gqlGitHub({
+    query: generateGetMilestonesQuery(["OPEN", "CLOSED"]),
+  });
+  return res.data.repository.milestones.nodes;
+}
+
+function generateGetMilestonesQuery(states: Array<"OPEN" | "CLOSED">) {
+  return `\
   {
     repository(owner: "redwoodjs", name: "redwood") {
-      milestones(first: 100, states: OPEN) {
+      milestones(last: 100, states: [${states.join(",")}]) {
         nodes {
           id
           title
@@ -191,6 +208,7 @@ const getMilestonesQuery = `\
     }
   }
 `;
+}
 
 export async function getMilestone(title: string) {
   const milestones = await getMilestones();
@@ -199,4 +217,37 @@ export async function getMilestone(title: string) {
     throw new Error(`Couldn't find an open milestone the the title "${title}"`);
   }
   return milestone;
+}
+
+const getPrsInMilestoneQuery = `\
+  query ($milestoneNumber: Int!) {
+    repository(owner: "redwoodjs", name: "redwood") {
+      milestone(number: $milestoneNumber) {
+        pullRequests(first: 100) {
+          nodes {
+            title
+            number
+            url
+            labels(first: 10) {
+              nodes {
+                name
+              }
+            }
+            author {
+              login
+            }
+          }
+        }
+      }
+    }
+  }
+`;
+
+export async function getPrsInMilestone(milestoneNumber: number) {
+  const res = await gqlGitHub({
+    query: getPrsInMilestoneQuery,
+    variables: { milestoneNumber },
+  });
+
+  return res.data.repository.milestone.pullRequests.nodes;
 }
