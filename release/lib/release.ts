@@ -244,18 +244,35 @@ async function updateReleaseBranch(
 
       if (line === "") {
         console.log();
-        throw new CustomError(
+        consoleBoxen(
+          "✋ Missing commit",
           [
             "Couldn't find the commit for",
             "",
             `  ${pr.line}`,
             "",
-            `in the ${chalk.magenta("next")} branch. Have you triaged?`,
+            `in the ${chalk.magenta("next")} branch.`,
+            "This is commonly because you haven't properly triaged all PRs yet",
+            "",
+            "You have two options",
+            "  - Cancel the release process (recommended)",
+            "  - Exclude PR from release",
           ].join("\n"),
         );
-      }
+        const res = await question(
+          "What do you want to do? [C(ancel)/e(xclude)] > ",
+        );
 
-      pr.hash = await getCommitHash(line);
+        if (res !== "e" && res !== "exclude") {
+          throw new CustomError("Re-run the release script after triaging");
+        }
+
+        // PRs that don't have a hash are not cherry-picked to the release
+        // branch.
+        pr.hash = undefined;
+      } else {
+        pr.hash = await getCommitHash(line);
+      }
     } else {
       if (pr.milestone.title !== options.nextRelease) {
         await updatePrMilestone(pr.id, milestone.id);
