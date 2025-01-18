@@ -1275,5 +1275,7 @@
   "https://github.com/redwoodjs/redwood/pull/11907": "next-release-patch",
   "https://github.com/redwoodjs/redwood/pull/11902": "next-release-major",
   "https://github.com/redwoodjs/redwood/pull/11904": "next-release-major",
-  "https://github.com/redwoodjs/redwood/pull/11906": "chore"
+  "https://github.com/redwoodjs/redwood/pull/11906": "chore",
+  "https://github.com/redwoodjs/redwood/pull/11908": "chore",
+  "https://github.com/redwoodjs/redwood/pull/11911": "next-release-patch"
 }
