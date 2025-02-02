@@ -149,7 +149,7 @@ const updatePrMilestoneMutation = `\
 `;
 
 export async function createMilestone(title: string) {
-  const headers = await getGitHubFetchHeaders();
+  const headers = getGitHubFetchHeaders();
   const res = await fetch(
     `https://api.github.com/repos/redwoodjs/redwood/milestones`,
     {
@@ -171,7 +171,7 @@ export async function closeMilestone(title: string) {
 
   const url = `https://api.github.com/repos/redwoodjs/redwood/milestones/${milestone.number}`;
   logs.push(`Posting to ${url}`);
-  const headers = await getGitHubFetchHeaders();
+  const headers = getGitHubFetchHeaders();
 
   const res = await fetch(url, {
     method: "POST",
