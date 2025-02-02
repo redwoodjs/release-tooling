@@ -5,12 +5,12 @@ import fs from "node:fs/promises";
 import { $, chalk } from "zx";
 
 import { assertGitHubToken } from "@lib/assert_github_token.js";
-import { getReleaseBranches } from "@lib/branches.js";
 import { consoleBoxen, logSection } from "@lib/console_helpers.js";
 import { CustomError } from "@lib/custom_error.js";
 import { assertRwfwPathAndSetCwd } from "@lib/cwd.js";
 import { setUpLogs } from "@lib/logs.js";
 import { getAllMilestones, getPrsInMilestone } from "@lib/milestones.js";
+import { getLast20Releases } from "@lib/releases.js";
 import { prompts } from "@lib/prompts.js";
 import { unwrap } from "@lib/zx_helpers.js";
 
@@ -40,26 +40,34 @@ try {
   logSection("Determining the milestone to generate release notes for");
 
   const milestones = await getAllMilestones();
+  const sortedMilestones = milestones.sort(
+    (m1, m2) =>
+      new Date(m2.createdAt).getTime() - new Date(m1.createdAt).getTime(),
+  );
+
+  const releases = await getLast20Releases();
 
   const localBranchName = await getLocalBranchName();
-  console.log("localBranchName", localBranchName);
 
   // Check if there's a milestone name that matches the branch name
   const matchingMilestone = milestones.find((milestone) =>
     localBranchName.endsWith("/" + milestone.title),
   );
 
-  console.log("matchingMilestone", matchingMilestone);
-
   let selectedMilestone = matchingMilestone;
 
   if (!selectedMilestone) {
-    const milestoneChoices = milestones
+    const milestoneChoices = sortedMilestones
+      .filter(
+        (milestone) =>
+          milestone.title.startsWith("v") &&
+          new Date(milestone.createdAt).getTime() >
+            new Date(releases.at(-1)?.createdAt || "").getTime(),
+      )
       .map((milestone) => ({
         title: milestone.title,
         value: milestone,
-      }))
-      .reverse();
+      }));
 
     const promptedMilestone = await prompts({
       type: "select",
@@ -76,6 +84,13 @@ try {
     }
 
     selectedMilestone = promptedMilestone.milestone;
+  }
+
+  if (!selectedMilestone) {
+    throw new CustomError(
+      "No milestone selected",
+      "This is an error in the script",
+    );
   }
 
   console.log("Selected milestone:", selectedMilestone.title);
@@ -132,34 +147,34 @@ try {
         .trim();
 
       const pr = pullRequests.find((pr) => pr.number === prNumber);
-      console.log("labels", pr?.labels.nodes);
-      console.log(
-        "labels includes dependencies",
-        pr?.labels.nodes.includes("dependencies"),
-      );
-      const releaseLabel = pr?.labels.nodes.find(
+
+      if (!pr) {
+        throw new CustomError(
+          "PR not found",
+          `PR #${prNumber} not found in the list of PRs for milestone ${selectedMilestone.title}`,
+        );
+      }
+
+      const releaseLabel = pr.labels.nodes.find(
         (label) => label.name === "dependencies",
       )
         ? { name: "release:dependency" }
-        : pr?.labels.nodes.find((label: { name: string }) =>
+        : pr.labels.nodes.find((label: { name: string }) =>
             label.name.startsWith("release:"),
           );
-      console.log("releaseLabel", releaseLabel);
 
       let type: keyof typeof changesets = "chore";
       if (releaseLabel) {
         const labelType = releaseLabel.name.split(":")[1];
-        if (
-          ["feature", "fix", "docs", "dependency", "chore"].includes(labelType)
-        ) {
+        if (isLabelType(labelType)) {
           type = labelType;
         }
       }
 
       changesets[type]?.push({
         prNumber,
-        title: pr?.title,
-        author: pr?.author.login,
+        title: pr.title,
+        author: pr.author.login,
         content: changesetContent,
       });
     }),
@@ -192,6 +207,12 @@ try {
   }
 }
 
+function isLabelType(
+  labelType: string,
+): labelType is "feature" | "fix" | "docs" | "dependency" | "chore" {
+  return ["feature", "fix", "docs", "dependency", "chore"].includes(labelType);
+}
+
 async function getLocalBranchName() {
   const currentBranch = unwrap(await $`git branch --show-current`);
 
@@ -199,17 +220,7 @@ async function getLocalBranchName() {
     return currentBranch;
   }
 
-  const releaseBranches = unwrap(
-    await $`git branch --sort=-committerdate --list release/*`,
-  );
-
-  console.log("releaseBranches", releaseBranches);
-
-  const newestReleaseBranch = releaseBranches.split("\n")[0].trim();
-
-  console.log("newestReleaseBranch >" + newestReleaseBranch + "<");
-
-  return newestReleaseBranch;
+  return "";
 }
 
 function notes(title: string, changesets: Array<ChangesetItem>) {
