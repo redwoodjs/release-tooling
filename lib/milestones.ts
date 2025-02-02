@@ -257,7 +257,7 @@ const getPrsInMilestoneQuery = `\
   }
 `;
 
-interface PullRequest {
+interface MilestonePullRequest {
   title: string;
   number: number;
   url: string;
@@ -271,7 +271,9 @@ interface PullRequest {
 
 export async function getPrsInMilestone(milestoneNumber: number) {
   const res = await gqlGitHub<{
-    repository: { milestone: { pullRequests: { nodes: Array<PullRequest> } } };
+    repository: {
+      milestone: { pullRequests: { nodes: Array<MilestonePullRequest> } };
+    };
   }>({
     query: getPrsInMilestoneQuery,
     variables: { milestoneNumber },
