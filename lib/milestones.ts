@@ -182,15 +182,28 @@ export async function closeMilestone(title: string) {
   logs.push("close milestone response json", json);
 }
 
+interface Milestone {
+  id: string;
+  title: string;
+  number: number;
+  createdAt: string;
+}
+
 export async function getMilestones() {
-  const res = await gqlGitHub({ query: generateGetMilestonesQuery(["OPEN"]) });
+  const res = await gqlGitHub<{
+    repository: { milestones: { nodes: Array<Milestone> } };
+  }>({ query: generateGetMilestonesQuery(["OPEN"]) });
+
   return res.data.repository.milestones.nodes;
 }
 
 export async function getAllMilestones() {
-  const res = await gqlGitHub({
+  const res = await gqlGitHub<{
+    repository: { milestones: { nodes: Array<Milestone> } };
+  }>({
     query: generateGetMilestonesQuery(["OPEN", "CLOSED"]),
   });
+
   return res.data.repository.milestones.nodes;
 }
 
@@ -203,6 +216,7 @@ function generateGetMilestonesQuery(states: Array<"OPEN" | "CLOSED">) {
           id
           title
           number
+          createdAt
         }
       }
     }
@@ -243,8 +257,22 @@ const getPrsInMilestoneQuery = `\
   }
 `;
 
+interface PullRequest {
+  title: string;
+  number: number;
+  url: string;
+  labels: {
+    nodes: Array<{ name: string }>;
+  };
+  author: {
+    login: string;
+  };
+}
+
 export async function getPrsInMilestone(milestoneNumber: number) {
-  const res = await gqlGitHub({
+  const res = await gqlGitHub<{
+    repository: { milestone: { pullRequests: { nodes: Array<PullRequest> } } };
+  }>({
     query: getPrsInMilestoneQuery,
     variables: { milestoneNumber },
   });

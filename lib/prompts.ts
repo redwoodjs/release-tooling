@@ -2,11 +2,11 @@ import promptsModule from "prompts";
 import type { Options, PromptObject } from "prompts";
 
 /** Wrapper around `prompts` to exit on Ctrl + C */
-export function prompts(
-  promptsObject: PromptObject,
+export function prompts<T extends string = string>(
+  promptsObject: PromptObject<T>,
   promptsOptions: Options = {},
 ) {
-  return promptsModule(promptsObject, {
+  return promptsModule<T>(promptsObject, {
     ...promptsOptions,
     onCancel: () => process.exit(1),
   });

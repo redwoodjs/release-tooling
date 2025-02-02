@@ -1,12 +1,19 @@
 export function getGitHubFetchHeaders() {
   return {
     "Content-Type": "application/json",
-    "Authorization": `Bearer ${process.env.REDWOOD_GITHUB_TOKEN}`,
+    Authorization: `Bearer ${process.env.REDWOOD_GITHUB_TOKEN}`,
   };
 }
 
-export async function gqlGitHub({ query, variables }: { query: string; variables?: Record<string, any> }) {
+export async function gqlGitHub<TResult = any>({
+  query,
+  variables,
+}: {
+  query: string;
+  variables?: Record<string, any>;
+}) {
   const headers = getGitHubFetchHeaders();
+
   const res = await fetch("https://api.github.com/graphql", {
     method: "POST",
     headers,
@@ -15,7 +22,8 @@ export async function gqlGitHub({ query, variables }: { query: string; variables
       variables,
     }),
   });
-  return res.json();
+
+  return res.json() as Promise<{ data: TResult }>;
 }
 
 export async function getUserLogin() {
